@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proje Takip — Ocianix</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#f5f5f3;--surface:#ffffff;--surface2:#f0f0ed;--surface3:#e8e8e4;
+      --border:#e2e2dd;--border2:#d4d4cf;
+      --text:#2d3a2e;--text2:#6b7a6d;--text3:#9baa9d;
+      --accent:#5a8a6a;--accent2:#74a684;--accent-bg:#eef6f0;
+      --green:#5a8a6a;--green-bg:#eef6f0;
+      --yellow:#c4a24e;--yellow-bg:#fdf6e3;
+      --blue:#6a9e8a;--blue-bg:#edf7f3;
+      --rose:#c27a7a;--rose-bg:#faf0f0;
+      --orange:#c49a5c;--orange-bg:#fdf5ec;
+      --purple:#8a9e6a;--purple-bg:#f2f6ee;
+      --teal:#5aaa8a;--teal-bg:#ecfaf5;
+      --radius:14px;
+      --shadow:0 1px 3px rgba(45,58,46,.04),0 4px 14px rgba(45,58,46,.04);
+      --shadow2:0 2px 8px rgba(45,58,46,.06),0 12px 28px rgba(45,58,46,.06);
+    }
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+    /* ── Header ── */
+    .header{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--teal));border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;letter-spacing:-.5px}
+    .logo h1{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+    .logo span{font-size:11px;color:var(--text3);font-weight:400}
+    .header-right{display:flex;gap:10px;align-items:center}
+
+    .btn{padding:9px 18px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:all .2s}
+    .btn:hover{border-color:var(--border2);background:var(--surface2)}
+    .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+    .btn-sm{padding:6px 13px;font-size:12px;border-radius:8px}
+    .btn-danger{color:var(--rose);border-color:var(--rose)}
+    .btn-danger:hover{background:var(--rose-bg)}
+    .btn-ghost{border:none;background:none;color:var(--text2);padding:6px 10px}
+    .btn-ghost:hover{background:var(--surface2);color:var(--text)}
+
+    /* ── Stats ── */
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:24px 32px 16px}
+    .stat{padding:18px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .stat .l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+    .stat .v{font-size:28px;font-weight:800;margin-top:4px;letter-spacing:-1px}
+
+    /* ── Multi-layer Filter ── */
+    .filter-section{padding:0 32px 8px}
+    .filter-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+    .filter-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;min-width:70px}
+    .search-box{flex:1;min-width:220px;max-width:360px;padding:9px 16px 9px 38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='%239aa8ba' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.868-3.834zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+    .search-box:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,106,191,.1)}
+    .search-box::placeholder{color:var(--text3)}
+    .chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:11px;font-family:inherit;font-weight:500;transition:all .2s;white-space:nowrap}
+    .chip:hover{border-color:var(--accent);color:var(--accent)}
+    .chip.active{border-color:var(--accent);color:#fff;background:var(--accent)}
+    .chip-count{font-size:10px;background:var(--surface2);border-radius:8px;padding:1px 6px;margin-left:4px;color:var(--text3)}
+    .chip.active .chip-count{background:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+
+    .view-toggle{display:flex;gap:2px;background:var(--surface2);border-radius:8px;padding:3px;margin-left:auto}
+    .vbtn{padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;font-weight:500}
+    .vbtn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+    /* ── Kanban ── */
+    .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:12px 32px 32px;min-height:400px}
+    .kcol{background:var(--surface2);border-radius:var(--radius);display:flex;flex-direction:column;min-height:300px}
+    .kcol-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .kcol-head h2{font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+    .kdot{width:8px;height:8px;border-radius:50%}
+    .kdot-w{background:var(--blue)}.kdot-a{background:var(--yellow)}.kdot-d{background:var(--green)}
+    .kcount{font-size:11px;background:var(--surface);padding:2px 9px;border-radius:10px;color:var(--text3);font-weight:500}
+    .kcol-body{padding:0 8px 8px;display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto}
+
+    /* ── Card ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .25s;box-shadow:var(--shadow);position:relative}
+    .card:hover{border-color:var(--accent2);box-shadow:var(--shadow2);transform:translateY(-2px)}
+    .card.featured{border-left:3px solid var(--accent)}
+    .card-top{display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;gap:8px}
+    .card-top h3{font-size:14px;font-weight:600;line-height:1.3}
+    .badge{font-size:10px;padding:3px 9px;border-radius:6px;font-weight:500;white-space:nowrap}
+    .b-web{background:var(--blue-bg);color:var(--blue)}
+    .b-app{background:var(--purple-bg);color:var(--purple)}
+    .b-other{background:var(--surface2);color:var(--text3)}
+    .star{position:absolute;top:10px;right:10px;font-size:14px;color:var(--yellow)}
+    .card-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+    .card-highlight{font-size:11px;color:var(--accent);background:var(--accent-bg);padding:6px 10px;border-radius:8px;margin-bottom:12px;line-height:1.4;font-weight:500}
+    .pbar{width:100%;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+    .pfill{height:100%;border-radius:3px;transition:width .6s}
+    .p-h{background:var(--green)}.p-m{background:var(--yellow)}.p-l{background:var(--orange)}.p-z{background:var(--border)}
+    .card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .card-meta .pct{font-size:12px;font-weight:600}.card-meta .dt{font-size:11px;color:var(--text3)}
+    .pills{display:flex;gap:4px;flex-wrap:wrap}
+    .pill{font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--text2);font-weight:500}
+    .tag-pill{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--text3)}
+    .card-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--accent);text-decoration:none;margin-top:8px;font-weight:500}
+    .card-link:hover{text-decoration:underline}
+
+    /* ── Alerts ── */
+    .alerts{padding:0 32px 8px}
+    .alert{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:12px;margin-bottom:10px;font-size:13px;font-weight:500;animation:slideIn .3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .alert-finish{background:#eef6f0;border:1px solid #c8e6d0;color:#3a7a52}
+    .alert-finish .alert-icon{font-size:18px}
+    .alert-stale{background:#fef9ec;border:1px solid #f0e0a8;color:#8a7030}
+    .alert-stale .alert-icon{font-size:18px}
+    .alert-body{flex:1}
+    .alert-body strong{font-weight:600}
+    .alert-body .alert-sub{font-size:11px;color:inherit;opacity:.7;margin-top:2px}
+    .alert-actions{display:flex;gap:6px;align-items:center}
+    .alert-btn{padding:5px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font-size:11px;font-family:inherit;font-weight:500;opacity:.8;transition:all .2s}
+    .alert-btn:hover{opacity:1;background:rgba(0,0,0,.05)}
+    .alert-btn-fill{background:currentColor;border-color:currentColor}
+    .alert-btn-fill span{color:white;mix-blend-mode:normal}
+    .note-input{padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-family:inherit;width:200px;outline:none;color:var(--text)}
+    .note-input:focus{border-color:var(--accent)}
+    .stale-note{font-size:11px;color:var(--text2);background:var(--surface2);padding:4px 10px;border-radius:6px;margin-top:6px;display:inline-block}
+    .alert-dismiss{background:none;border:none;font-size:16px;cursor:pointer;color:inherit;opacity:.5;padding:4px}
+    .alert-dismiss:hover{opacity:1}
+
+    /* ── List ── */
+    .list-view{padding:12px 32px 32px;display:none}
+    .list-view table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .list-view th{text-align:left;padding:13px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);background:var(--surface2);font-weight:600}
+    .list-view td{padding:13px 16px;font-size:13px;border-top:1px solid var(--border)}
+    .list-view tr:hover td{background:var(--surface2)}
+
+    /* ── Pages ── */
+    .page{display:none}.page.active{display:block}
+
+    /* ── Single Project ── */
+    .proj-page{padding:0 32px 40px}
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;padding:16px 0 20px;font-weight:500;text-decoration:none}
+    .back:hover{color:var(--accent)}
+
+    .hero{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;box-shadow:var(--shadow);margin-bottom:24px}
+    .hero-top{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+    .hero-title{font-size:28px;font-weight:800;letter-spacing:-.6px;margin-bottom:6px}
+    .hero-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .sb{font-size:11px;padding:5px 14px;border-radius:20px;font-weight:600}
+    .sb-devam{background:var(--yellow-bg);color:var(--yellow)}.sb-baslanacak{background:var(--blue-bg);color:var(--blue)}.sb-tamamlandi{background:var(--green-bg);color:var(--green)}
+    .hero-highlight{font-size:14px;color:var(--accent);background:var(--accent-bg);padding:10px 16px;border-radius:10px;margin-bottom:16px;font-weight:500;display:inline-block}
+    .hero-desc{font-size:15px;color:var(--text2);line-height:1.7;max-width:720px;margin-bottom:20px}
+    .hero-links{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+    .hero-link{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--accent);text-decoration:none;font-weight:500;transition:all .2s;background:var(--surface)}
+    .hero-link:hover{background:var(--accent-bg);border-color:var(--accent)}
+    .hero-link svg{width:16px;height:16px}
+    .hero-pbar{margin-bottom:6px}.hero-pbar .pbar{height:10px;border-radius:5px}.hero-pbar .pfill{border-radius:5px}
+    .hero-pmeta{display:flex;justify-content:space-between;font-size:13px;color:var(--text2)}
+    .hero-pmeta strong{color:var(--text);font-size:20px}
+
+    .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .info-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+    .info-box .il{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+    .info-box .iv{font-size:26px;font-weight:800;color:var(--text)}
+    .info-box .is{font-size:11px;color:var(--text3);margin-top:2px}
+
+    .dgrid{display:grid;grid-template-columns:5fr 2fr;gap:24px}
+    .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+    .dcard h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:16px;font-weight:600}
+    .stack-list{display:flex;gap:8px;flex-wrap:wrap}
+    .stack-item{padding:7px 16px;border-radius:10px;background:var(--accent-bg);font-size:13px;font-weight:500;color:var(--accent)}
+    .tool-item{padding:7px 16px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--text2)}
+    .dtag{padding:5px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;color:var(--text2)}
+    .todo-list{list-style:none}
+    .todo-li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .todo-li:last-child{border-bottom:none}
+    .todo-li input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
+    .todo-li.done span{text-decoration:line-through;color:var(--text3)}
+    .sidebar-info{margin-bottom:18px}
+    .sidebar-info .sil{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-weight:600}
+    .sidebar-info .siv{font-size:13px;color:var(--text);font-weight:500}
+    .sidebar-info .siv code{font-size:12px;color:var(--text2);background:var(--surface2);padding:4px 8px;border-radius:6px;word-break:break-all;display:inline-block;margin-top:2px}
+    .sidebar-info .siv a{color:var(--accent);text-decoration:none;font-weight:500}.sidebar-info .siv a:hover{text-decoration:underline}
+
+    .actions-row{display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+    /* ── Modal ── */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(30,42,59,.25);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+    .overlay.show{display:flex}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:95%;max-width:620px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 20px 60px rgba(30,42,59,.12)}
+    .modal h2{font-size:20px;font-weight:700;margin-bottom:24px}
+    .fg{margin-bottom:16px}
+    .fg label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+    .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border .2s}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,106,191,.08)}
+    .fg textarea{min-height:76px;resize:vertical}
+    .fg .hint{font-size:11px;color:var(--text3);margin-top:3px}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+
+    .empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+
+    @media(max-width:960px){.kanban,.stats{grid-template-columns:1fr 1fr}.dgrid{grid-template-columns:1fr}.info-grid{grid-template-columns:1fr 1fr}.frow{grid-template-columns:1fr}.header,.stats,.filter-section,.kanban,.list-view,.proj-page{padding-left:16px;padding-right:16px}}
+    @media(max-width:600px){.kanban,.stats{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo"><div class="logo-icon">PT</div><div><h1>Proje Takip</h1><span>Ocianix Studio</span></div></div>
+    <div class="header-right">
+      <button class="btn btn-primary" onclick="openModal()">+ Yeni Proje</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="pg-dash">
+    <div class="stats">
+      <div class="stat"><div class="l">Toplam</div><div class="v" style="color:var(--accent)" id="s-tot">0</div></div>
+      <div class="stat"><div class="l">Devam Eden</div><div class="v" style="color:var(--yellow)" id="s-dev">0</div></div>
+      <div class="stat"><div class="l">Baslanacak</div><div class="v" style="color:var(--blue)" id="s-bas">0</div></div>
+      <div class="stat"><div class="l">Tamamlanmis</div><div class="v" style="color:var(--green)" id="s-tam">0</div></div>
+      <div class="stat"><div class="l">Ort. Ilerleme</div><div class="v" style="color:var(--purple)" id="s-avg">0%</div></div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="alerts" id="alerts-container"></div>
+
+    <div class="filter-section">
+      <div class="filter-row">
+        <span class="filter-label">Ara</span>
+        <input class="search-box" type="text" id="q" placeholder="Proje, teknoloji, etiket ara..." oninput="render()">
+        <div class="view-toggle">
+          <button class="vbtn active" onclick="setV('k')">Kanban</button>
+          <button class="vbtn" onclick="setV('l')">Liste</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Durum</span>
+        <div id="f-status"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Kategori</span>
+        <div id="f-cat"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Tur</span>
+        <div id="f-type"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Stack</span>
+        <div id="f-stack" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Etiket</span>
+        <div id="f-tag" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="kanban" id="kview">
+      <div class="kcol"><div class="kcol-head"><h2><span class="kdot kdot-w"></span>Baslanacak<span class="kcount" id="c-b">0</span></h2></div><div class="kcol-body" id="col-b"></div></div>
+      <div class="kcol"><div class="kcol-head"><h2><span class="kdot kdot-a"></span>Devam Eden<span class="kcount" id="c-d">0</span></h2></div><div class="kcol-body" id="col-d"></div></div>
+      <div class="kcol"><div class="kcol-head"><h2><span class="kdot kdot-d"></span>Tamamlanmis<span class="kcount" id="c-t">0</span></h2></div><div class="kcol-body" id="col-t"></div></div>
+    </div>
+
+    <div class="list-view" id="lview">
+      <table><thead><tr><th>Proje</th><th>Kategori</th><th>Durum</th><th>Ilerleme</th><th>Stack</th><th>Link</th><th>Son</th></tr></thead><tbody id="ltbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- SINGLE PROJECT -->
+  <div class="page" id="pg-proj">
+    <div class="proj-page">
+      <a class="back" onclick="showPg('dash')">&#8592; Tum Projeler</a>
+      <div id="proj-detail"></div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="overlay" id="modal">
+    <div class="modal">
+      <h2 id="modal-title">Yeni Proje Ekle</h2>
+      <input type="hidden" id="f-edit-id">
+      <div class="fg"><label>Proje Adi *</label><input id="f-name" placeholder="Orn: Musteri Portali"></div>
+      <div class="fg"><label>Aciklama *</label><textarea id="f-desc" placeholder="Proje ne hakkinda?"></textarea></div>
+      <div class="fg"><label>One Cikan Ozellik</label><input id="f-highlight" placeholder="Bu projeyi ozel kilan ne?"><div class="hint">Kartlarda ve detay sayfasinda one cikar</div></div>
+      <div class="frow">
+        <div class="fg"><label>Tur</label><select id="f-type-i"><option>Web Sitesi</option><option>Uygulama</option><option>Mobil Uygulama</option><option>API / Backend</option><option>Otomasyon</option><option>Diger</option></select></div>
+        <div class="fg"><label>Kategori</label><select id="f-cat-i"><option value="turizm">Turizm</option><option value="stüdyo">Studyo</option><option value="kurumsal">Kurumsal</option><option value="yazılım">Yazilim</option><option value="e-ticaret">E-Ticaret</option><option value="diger">Diger</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Durum</label><select id="f-status-i"><option value="baslanacak">Baslanacak</option><option value="devam">Devam Eden</option><option value="tamamlandi">Tamamlanmis</option></select></div>
+        <div class="fg"><label>Ilerleme (%)</label><input type="number" id="f-prog" min="0" max="100" value="0"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Site Linki (URL)</label><input id="f-url" placeholder="https://..."></div>
+        <div class="fg"><label>Repo Linki</label><input id="f-repo" placeholder="https://github.com/..."></div>
+      </div>
+      <div class="fg"><label>Klasor Yolu</label><input id="f-folder" placeholder="/home/fevzi/projects/..."></div>
+      <div class="fg"><label>Teknoloji Stack</label><input id="f-stack-i" placeholder="Next.js, TypeScript, Tailwind, Supabase"><div class="hint">Virgul ile ayir</div></div>
+      <div class="fg"><label>Araclar & Servisler</label><input id="f-tools" placeholder="Cloudflare Pages, Vercel, Resend"><div class="hint">Virgul ile ayir</div></div>
+      <div class="fg"><label>Etiketler</label><input id="f-tags" placeholder="turizm, e-ticaret, musteri"><div class="hint">Virgul ile ayir</div></div>
+      <div class="fg"><label>Diller</label><input id="f-lang" placeholder="TR, EN"></div>
+      <div class="frow">
+        <div class="fg"><label>Musteri / Sahip</label><input id="f-client" placeholder="Orn: Ali Bey, Kendi projem"></div>
+        <div class="fg"><label>Musteri Iletisim</label><input id="f-client-contact" placeholder="Telefon, e-posta vb."></div>
+      </div>
+      <div class="fg"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="f-portfolio" style="width:16px;height:16px;accent-color:var(--accent)"> Ocianix.com Portfolyosunde Sergilenecek</label><div class="hint">%70+ veya biten projelerde portfolyo olarak gosterilsin mi?</div></div>
+      <div class="fg"><label>Yapilacaklar</label><textarea id="f-todos" placeholder="Her satira bir madde..."></textarea></div>
+      <div class="fg"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="f-featured" style="width:16px;height:16px;accent-color:var(--accent)"> One Cikan Proje</label></div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal()">Iptal</button>
+        <button class="btn btn-primary" onclick="saveProject()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+let P=[],F={status:null,cat:null,type:null,stack:null,tag:null};
+
+async function load(){
+  try{
+    const s=localStorage.getItem('pt_projects');
+    if(s){P=JSON.parse(s)}else{const r=await fetch('projects.json?'+Date.now());P=await r.json();save()}
+  }catch(e){P=[]}
+  render();
+}
+function save(){localStorage.setItem('pt_projects',JSON.stringify(P))}
+function pc(v){return v>=75?'p-h':v>=40?'p-m':v>0?'p-l':'p-z'}
+function bc(t){return t==='Web Sitesi'?'b-web':t==='Uygulama'?'b-app':'b-other'}
+function sl(s){return s==='devam'?'Devam Eden':s==='baslanacak'?'Baslanacak':'Tamamlanmis'}
+function catLabel(c){const m={turizm:'Turizm','stüdyo':'Studyo',kurumsal:'Kurumsal','yazılım':'Yazilim','e-ticaret':'E-Ticaret',diger:'Diger'};return m[c]||c}
+
+function fil(){
+  const q=document.getElementById('q').value.toLowerCase();
+  return P.filter(p=>{
+    if(q&&!p.name.toLowerCase().includes(q)&&!p.description.toLowerCase().includes(q)&&!p.stack.some(s=>s.toLowerCase().includes(q))&&!p.tags.some(t=>t.toLowerCase().includes(q)))return false;
+    if(F.status&&p.status!==F.status)return false;
+    if(F.cat&&p.category!==F.cat)return false;
+    if(F.type&&p.type!==F.type)return false;
+    if(F.stack&&!p.stack.some(s=>s.toLowerCase()===F.stack.toLowerCase()))return false;
+    if(F.tag&&!p.tags.includes(F.tag))return false;
+    return true;
+  });
+}
+
+function render(){
+  const f=fil();
+  const dev=f.filter(p=>p.status==='devam').length,bas=f.filter(p=>p.status==='baslanacak').length,tam=f.filter(p=>p.status==='tamamlandi').length;
+  const avg=f.length?Math.round(f.reduce((s,p)=>s+p.progress,0)/f.length):0;
+  document.getElementById('s-tot').textContent=f.length;
+  document.getElementById('s-dev').textContent=dev;
+  document.getElementById('s-bas').textContent=bas;
+  document.getElementById('s-tam').textContent=tam;
+  document.getElementById('s-avg').textContent=avg+'%';
+
+  // Filters
+  renderChips('f-status',[{v:null,l:'Tumu'},{v:'baslanacak',l:'Baslanacak'},{v:'devam',l:'Devam Eden'},{v:'tamamlandi',l:'Tamamlanmis'}],'status');
+  const cats=[...new Set(P.map(p=>p.category).filter(Boolean))];
+  renderChips('f-cat',[{v:null,l:'Tumu'},...cats.map(c=>({v:c,l:catLabel(c),n:P.filter(p=>p.category===c).length}))],'cat');
+  const types=[...new Set(P.map(p=>p.type))];
+  renderChips('f-type',[{v:null,l:'Tumu'},...types.map(t=>({v:t,l:t,n:P.filter(p=>p.type===t).length}))],'type');
+  const stacks=new Map();P.forEach(p=>p.stack.forEach(s=>{stacks.set(s,(stacks.get(s)||0)+1)}));
+  renderChips('f-stack',[{v:null,l:'Tumu'},...[...stacks.entries()].sort((a,b)=>b[1]-a[1]).map(([s,n])=>({v:s,l:s,n}))],'stack');
+  const tags=new Map();P.forEach(p=>p.tags.forEach(t=>{tags.set(t,(tags.get(t)||0)+1)}));
+  renderChips('f-tag',[{v:null,l:'Tumu'},...[...tags.entries()].sort((a,b)=>b[1]-a[1]).map(([t,n])=>({v:t,l:t,n}))],'tag');
+
+  // Kanban
+  const cols={baslanacak:[],devam:[],tamamlandi:[]};
+  f.forEach(p=>cols[p.status]?.push(p));
+  Object.values(cols).forEach(a=>a.sort((a,b)=>b.progress-a.progress));
+  document.getElementById('col-b').innerHTML=cols.baslanacak.map(card).join('')||'<div class="empty">Proje yok</div>';
+  document.getElementById('col-d').innerHTML=cols.devam.map(card).join('');
+  document.getElementById('col-t').innerHTML=cols.tamamlandi.map(card).join('')||'<div class="empty">Henuz tamamlanmis proje yok</div>';
+  document.getElementById('c-b').textContent=cols.baslanacak.length;
+  document.getElementById('c-d').textContent=cols.devam.length;
+  document.getElementById('c-t').textContent=cols.tamamlandi.length;
+
+  renderAlerts();
+
+  // List
+  const sorted=[...f].sort((a,b)=>b.progress-a.progress);
+  document.getElementById('ltbody').innerHTML=sorted.map(p=>`
+    <tr onclick="openProj('${p.id}')" style="cursor:pointer">
+      <td><strong>${p.name}</strong>${p.featured?' <span style="color:var(--yellow)">&#9733;</span>':''}</td>
+      <td><span class="badge" style="background:var(--surface2);color:var(--text2)">${catLabel(p.category||'')}</span></td>
+      <td><span class="kdot ${p.status==='devam'?'kdot-a':p.status==='baslanacak'?'kdot-w':'kdot-d'}" style="display:inline-block;margin-right:6px"></span>${sl(p.status)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pbar" style="width:80px"><div class="pfill ${pc(p.progress)}" style="width:${p.progress}%"></div></div><span style="font-size:12px;font-weight:600">${p.progress}%</span></div></td>
+      <td><div class="pills">${p.stack.slice(0,3).map(s=>`<span class="pill">${s}</span>`).join('')}</div></td>
+      <td>${p.url?`<a href="${p.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:12px">Ziyaret</a>`:'-'}</td>
+      <td style="color:var(--text3)">${p.lastActivity}</td>
+    </tr>`).join('');
+}
+
+function renderChips(id,items,key){
+  document.getElementById(id).innerHTML=items.map(i=>`<button class="chip ${F[key]===i.v?'active':''}" onclick="setF('${key}',${i.v===null?'null':"'"+i.v+"'"})">${i.l}${i.n?`<span class="chip-count">${i.n}</span>`:''}</button>`).join('');
+}
+function setF(k,v){F[k]=v;render()}
+
+function card(p){
+  return `<div class="card ${p.featured?'featured':''}" onclick="openProj('${p.id}')">
+    ${p.featured?'<span class="star">&#9733;</span>':''}
+    <div class="card-top"><h3>${p.name}</h3><span class="badge ${bc(p.type)}">${p.type}</span></div>
+    <div class="card-desc">${p.description}</div>
+    ${p.highlight?`<div class="card-highlight">${p.highlight}</div>`:''}
+    <div class="pbar"><div class="pfill ${pc(p.progress)}" style="width:${p.progress}%"></div></div>
+    <div class="card-meta"><span class="pct">${p.progress}%</span><span class="dt">${p.lastActivity}</span></div>
+    <div class="pills">${p.stack.slice(0,4).map(s=>`<span class="pill">${s}</span>`).join('')}${p.stack.length>4?`<span class="pill">+${p.stack.length-4}</span>`:''}</div>
+    ${p.tags.length?`<div class="pills" style="margin-top:6px">${p.tags.slice(0,3).map(t=>`<span class="tag-pill">${t}</span>`).join('')}</div>`:''}
+    ${p.url?`<a class="card-link" href="${p.url}" target="_blank" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.354 5.5H4a3 3 0 000 6h3a3 3 0 002.83-4H8.83A2 2 0 017 9.5H4a2 2 0 010-4h2.354zM9.646 10.5H12a3 3 0 000-6H9a3 3 0 00-2.83 4h1.17A2 2 0 019 6.5h3a2 2 0 010 4H9.646z"/></svg>${new URL(p.url).hostname}</a>`:''}
+  </div>`;
+}
+
+function setV(v){
+  document.getElementById('kview').style.display=v==='k'?'grid':'none';
+  document.getElementById('lview').style.display=v==='l'?'block':'none';
+  document.querySelectorAll('.vbtn').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='k')||(i===1&&v==='l')));
+}
+
+function showPg(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('pg-'+n).classList.add('active');if(n==='dash')render()}
+
+// ═══ SINGLE PROJECT ═══
+function openProj(id){
+  const p=P.find(x=>x.id===id);if(!p)return;
+  const done=p.todos.filter(t=>t.startsWith('[x] ')).length,total=p.todos.length;
+  document.getElementById('proj-detail').innerHTML=`
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-title">${p.name} ${p.featured?'<span style="color:var(--yellow);font-size:22px">&#9733;</span>':''}</div>
+          <div class="hero-badges">
+            <span class="badge ${bc(p.type)}">${p.type}</span>
+            <span class="sb sb-${p.status}">${sl(p.status)}</span>
+            <span class="badge" style="background:var(--surface2);color:var(--text2)">${catLabel(p.category||'')}</span>
+            ${p.languages.map(l=>`<span class="pill">${l}</span>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="editProj('${p.id}')">Duzenle</button>
+          <select class="btn btn-sm" style="font-family:inherit" onchange="chStatus('${p.id}',this.value)">
+            <option value="baslanacak" ${p.status==='baslanacak'?'selected':''}>Baslanacak</option>
+            <option value="devam" ${p.status==='devam'?'selected':''}>Devam Eden</option>
+            <option value="tamamlandi" ${p.status==='tamamlandi'?'selected':''}>Tamamlanmis</option>
+          </select>
+          <button class="btn btn-sm btn-danger" onclick="delProj('${p.id}')">Sil</button>
+        </div>
+      </div>
+      ${p.highlight?`<div class="hero-highlight">${p.highlight}</div>`:''}
+      <div class="hero-desc">${p.description}</div>
+      ${p.url||p.repo?`<div class="hero-links">
+        ${p.url?`<a class="hero-link" href="${p.url}" target="_blank"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542L3.343 7.914a3 3 0 104.243 4.243l1.828-1.829A3 3 0 008.586 5.5L8 6.086a1 1 0 00-.154.199 2 2 0 01.861 3.337L6.88 11.45a2 2 0 11-2.83-2.83l.793-.792a4 4 0 01-.128-1.287z"/><path d="M11.285 9.458l1.372-1.372a3 3 0 00-4.243-4.243L6.586 5.671A3 3 0 007.414 10.5l.586-.586a1 1 0 00.154-.199 2 2 0 01-.861-3.337L9.12 4.55a2 2 0 112.83 2.83l-.793.792c.112.42.155.855.128 1.287z"/></svg>${new URL(p.url).hostname}</a>`:''}
+        ${p.repo?`<a class="hero-link" href="${p.repo}" target="_blank"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub Repo</a>`:''}
+      </div>`:''}
+      <div class="hero-pbar"><div class="pbar"><div class="pfill ${pc(p.progress)}" style="width:${p.progress}%"></div></div></div>
+      <div class="hero-pmeta"><span>Ilerleme</span><strong>${p.progress}%</strong></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box"><div class="il">Sayfalar</div><div class="iv">${p.pages}</div></div>
+      <div class="info-box"><div class="il">Components</div><div class="iv">${p.components}</div></div>
+      <div class="info-box"><div class="il">Yapilacak</div><div class="iv">${done}/${total}</div><div class="is">tamamlandi</div></div>
+      <div class="info-box"><div class="il">Diller</div><div class="iv">${p.languages.length||0}</div><div class="is">${p.languages.join(', ')||'-'}</div></div>
+    </div>
+
+    <div class="dgrid">
+      <div>
+        <div class="dcard"><h3>Teknoloji Stack</h3><div class="stack-list">${p.stack.length?p.stack.map(s=>`<span class="stack-item">${s}</span>`).join(''):'<span style="color:var(--text3)">Belirlenmedi</span>'}</div></div>
+        <div class="dcard"><h3>Araclar & Servisler</h3><div class="stack-list">${p.tools.length?p.tools.map(t=>`<span class="tool-item">${t}</span>`).join(''):'<span style="color:var(--text3)">Belirlenmedi</span>'}</div></div>
+        <div class="dcard">
+          <h3>Yapilacaklar (${total})</h3>
+          ${total?`<ul class="todo-list">${p.todos.map((t,i)=>{const d=t.startsWith('[x] '),lb=d?t.replace('[x] ',''):t;return`<li class="todo-li ${d?'done':''}"><input type="checkbox" ${d?'checked':''} onchange="togTodo('${p.id}',${i})"><span>${lb}</span></li>`}).join('')}</ul>`:'<div style="color:var(--text3)">Madde yok</div>'}
+          <div style="margin-top:14px;display:flex;gap:8px">
+            <input type="text" id="ntodo-${p.id}" placeholder="Yeni madde..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')addTodo('${p.id}')">
+            <button class="btn btn-sm" onclick="addTodo('${p.id}')">Ekle</button>
+          </div>
+        </div>
+        ${p.tags.length?`<div class="dcard"><h3>Etiketler</h3><div class="stack-list">${p.tags.map(t=>`<span class="dtag">${t}</span>`).join('')}</div></div>`:''}
+        ${p.staleNote?`<div class="dcard"><h3>Duraklatma Notu</h3><div style="font-size:13px;color:var(--text2);line-height:1.6">${p.staleNote}</div><div style="font-size:11px;color:var(--text3);margin-top:6px">${p.staleNoteDate||''}</div></div>`:''}
+      </div>
+      <div>
+        <div class="dcard">
+          <h3>Proje Bilgileri</h3>
+          <div class="sidebar-info"><div class="sil">Olusturma</div><div class="siv">${p.createdAt}</div></div>
+          <div class="sidebar-info"><div class="sil">Son Aktivite</div><div class="siv">${p.lastActivity}</div></div>
+          <div class="sidebar-info"><div class="sil">Kategori</div><div class="siv">${catLabel(p.category||'')}</div></div>
+          ${p.client?`<div class="sidebar-info"><div class="sil">Musteri</div><div class="siv">${p.client}</div></div>`:''}
+          ${p.clientContact?`<div class="sidebar-info"><div class="sil">Musteri Iletisim</div><div class="siv">${p.clientContact}</div></div>`:''}
+          ${p.url?`<div class="sidebar-info"><div class="sil">Site</div><div class="siv"><a href="${p.url}" target="_blank">${p.url}</a></div></div>`:''}
+          ${p.repo?`<div class="sidebar-info"><div class="sil">Repo</div><div class="siv"><a href="${p.repo}" target="_blank">${p.repo}</a></div></div>`:''}
+          ${p.folder?`<div class="sidebar-info"><div class="sil">Klasor</div><div class="siv"><code>${p.folder}</code></div></div>`:''}
+        </div>
+        ${p.portfolio?`<div class="dcard" style="border:1px solid var(--green);background:var(--green-bg)">
+          <h3 style="color:var(--green)">Portfolyo</h3>
+          <div style="font-size:13px;color:var(--green);font-weight:500">Bu proje ocianix.com portfolyosunde sergilenecek</div>
+        </div>`:''}
+        <div class="dcard">
+          <h3>Ilerleme Guncelle</h3>
+          <input type="range" min="0" max="100" value="${p.progress}" style="width:100%;accent-color:var(--accent)" oninput="updProg('${p.id}',this.value)">
+          <div style="text-align:center;font-size:22px;font-weight:800;margin-top:8px;color:var(--accent)" id="pd-${p.id}">${p.progress}%</div>
+        </div>
+      </div>
+    </div>`;
+  showPg('proj');
+}
+
+function chStatus(id,s){const p=P.find(x=>x.id===id);if(p){p.status=s;if(s==='tamamlandi')p.progress=100;save();openProj(id)}}
+function updProg(id,v){const p=P.find(x=>x.id===id);if(p){p.progress=parseInt(v);save();document.getElementById('pd-'+id).textContent=v+'%'}}
+function togTodo(id,i){const p=P.find(x=>x.id===id);if(!p)return;p.todos[i]=p.todos[i].startsWith('[x] ')?p.todos[i].replace('[x] ',''):'[x] '+p.todos[i];save();openProj(id)}
+function addTodo(id){const el=document.getElementById('ntodo-'+id),v=el.value.trim();if(!v)return;const p=P.find(x=>x.id===id);if(p){p.todos.push(v);save();openProj(id)}}
+function delProj(id){if(!confirm('Projeyi silmek istediginize emin misiniz?'))return;P=P.filter(x=>x.id!==id);save();render();showPg('dash')}
+
+// ═══ MODAL ═══
+function openModal(){document.getElementById('modal-title').textContent='Yeni Proje Ekle';document.getElementById('f-edit-id').value='';clearForm();document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+
+function editProj(id){
+  const p=P.find(x=>x.id===id);if(!p)return;
+  document.getElementById('modal-title').textContent='Projeyi Duzenle';
+  document.getElementById('f-edit-id').value=id;
+  document.getElementById('f-name').value=p.name;
+  document.getElementById('f-desc').value=p.description;
+  document.getElementById('f-highlight').value=p.highlight||'';
+  document.getElementById('f-type-i').value=p.type;
+  document.getElementById('f-cat-i').value=p.category||'diger';
+  document.getElementById('f-status-i').value=p.status;
+  document.getElementById('f-prog').value=p.progress;
+  document.getElementById('f-url').value=p.url||'';
+  document.getElementById('f-repo').value=p.repo||'';
+  document.getElementById('f-folder').value=p.folder||'';
+  document.getElementById('f-stack-i').value=p.stack.join(', ');
+  document.getElementById('f-tools').value=p.tools.join(', ');
+  document.getElementById('f-tags').value=p.tags.join(', ');
+  document.getElementById('f-lang').value=p.languages.join(', ');
+  document.getElementById('f-todos').value=p.todos.map(t=>t.replace('[x] ','')).join('\n');
+  document.getElementById('f-featured').checked=p.featured||false;
+  document.getElementById('f-client').value=p.client||'';
+  document.getElementById('f-client-contact').value=p.clientContact||'';
+  document.getElementById('f-portfolio').checked=p.portfolio||false;
+  document.getElementById('modal').classList.add('show');
+}
+
+function saveProject(){
+  const name=document.getElementById('f-name').value.trim(),desc=document.getElementById('f-desc').value.trim();
+  if(!name||!desc){alert('Proje adi ve aciklama gerekli!');return}
+  const editId=document.getElementById('f-edit-id').value;
+  const data={
+    id:editId||name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,''),
+    name,description:desc,
+    highlight:document.getElementById('f-highlight').value.trim(),
+    type:document.getElementById('f-type-i').value,
+    category:document.getElementById('f-cat-i').value,
+    status:document.getElementById('f-status-i').value,
+    progress:parseInt(document.getElementById('f-prog').value)||0,
+    featured:document.getElementById('f-featured').checked,
+    client:document.getElementById('f-client').value.trim(),
+    clientContact:document.getElementById('f-client-contact').value.trim(),
+    portfolio:document.getElementById('f-portfolio').checked,
+    url:document.getElementById('f-url').value.trim(),
+    repo:document.getElementById('f-repo').value.trim(),
+    folder:document.getElementById('f-folder').value.trim(),
+    stack:document.getElementById('f-stack-i').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tools:document.getElementById('f-tools').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tags:document.getElementById('f-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    languages:document.getElementById('f-lang').value.split(',').map(s=>s.trim()).filter(Boolean),
+    todos:document.getElementById('f-todos').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    lastActivity:new Date().toISOString().split('T')[0],
+    pages:0,components:0,createdAt:new Date().toISOString().split('T')[0]
+  };
+  if(editId){
+    const idx=P.findIndex(x=>x.id===editId);
+    if(idx>=0){data.pages=P[idx].pages;data.components=P[idx].components;data.createdAt=P[idx].createdAt;data.staleNote=P[idx].staleNote||'';data.staleNoteDate=P[idx].staleNoteDate||'';data.todos=P[idx].todos.filter(t=>t.startsWith('[x] ')).concat(data.todos.filter(t=>!P[idx].todos.some(e=>e.replace('[x] ','')=== t)));P[idx]=data}
+  }else{P.push(data)}
+  save();render();closeModal();clearForm();
+  if(editId)openProj(editId);
+}
+
+function clearForm(){['f-name','f-desc','f-highlight','f-url','f-repo','f-folder','f-stack-i','f-tools','f-tags','f-lang','f-todos','f-client','f-client-contact'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-prog').value='0';document.getElementById('f-featured').checked=false;document.getElementById('f-portfolio').checked=false}
+
+// ═══ ALERTS ═══
+function renderAlerts(){
+  const today=new Date();
+  const dismissed=JSON.parse(localStorage.getItem('pt_dismissed')||'{}');
+  let html='';
+
+  P.forEach(p=>{
+    if(p.status==='tamamlandi')return;
+
+    // %85+ uyarisi — bitmeye cok yakin
+    if(p.progress>=85 && p.status==='devam'){
+      const key='finish-'+p.id;
+      if(!dismissed[key]||daysDiff(dismissed[key])>3){
+        html+=`<div class="alert alert-finish">
+          <span class="alert-icon">&#127942;</span>
+          <div class="alert-body">
+            <strong>${p.name}</strong> %${p.progress} tamamlandi — bitmeye cok yakin!
+            <div class="alert-sub">Biraz daha efor ve bu proje tamamlanmis olacak. Hadi bitirelim!</div>
+          </div>
+          <div class="alert-actions">
+            <button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="openProj('${p.id}')">Projeye Git</button>
+            <button class="alert-dismiss" onclick="dismissAlert('${key}')" title="Kapat">&times;</button>
+          </div>
+        </div>`;
+      }
+    }
+
+    // 1 hafta+ hareketsiz uyarisi
+    const lastDate=new Date(p.lastActivity);
+    const diff=Math.floor((today-lastDate)/(1000*60*60*24));
+    if(diff>=7 && p.status==='devam'){
+      const key='stale-'+p.id;
+      const hasNote=p.staleNote&&p.staleNote.length>0;
+      if(!dismissed[key]||daysDiff(dismissed[key])>7){
+        html+=`<div class="alert alert-stale">
+          <span class="alert-icon">&#9888;&#65039;</span>
+          <div class="alert-body">
+            <strong>${p.name}</strong> ${diff} gundur hareketsiz!
+            <div class="alert-sub">Neden ilerlemiyor? Asagidan bir sebep sec veya not ekle.</div>
+            ${hasNote?`<div class="stale-note">${p.staleNote} <span style="opacity:.6">(${p.staleNoteDate})</span></div>`:''}
+          </div>
+          <div class="alert-actions" style="flex-wrap:wrap;gap:6px">
+            <select class="note-input" style="width:auto;padding:5px 10px" onchange="saveStaleNote('${p.id}',this.value);this.value=''">
+              <option value="">Sebep sec...</option>
+              <option value="Musteri geri donus bekleniyor">Musteri bekleniyor</option>
+              <option value="Tasarim/icerik eksik">Tasarim/icerik eksik</option>
+              <option value="Baska projeye oncelik verildi">Baska projeye oncelik</option>
+              <option value="Teknik sorun / bug">Teknik sorun</option>
+              <option value="Butce / odeme bekleniyor">Butce bekleniyor</option>
+              <option value="Planlanan mola">Planlanan mola</option>
+            </select>
+            <input class="note-input" placeholder="Ozel not yaz..." onkeydown="if(event.key==='Enter'){saveStaleNote('${p.id}',this.value);this.value=''}">
+            <button class="alert-dismiss" onclick="dismissAlert('${key}')" title="Kapat">&times;</button>
+          </div>
+        </div>`;
+      }
+    }
+  });
+
+  document.getElementById('alerts-container').innerHTML=html;
+}
+
+function daysDiff(dateStr){return Math.floor((new Date()-new Date(dateStr))/(1000*60*60*24))}
+
+function dismissAlert(key){
+  const d=JSON.parse(localStorage.getItem('pt_dismissed')||'{}');
+  d[key]=new Date().toISOString().split('T')[0];
+  localStorage.setItem('pt_dismissed',JSON.stringify(d));
+  renderAlerts();
+}
+
+function saveStaleNote(id,note){
+  if(!note)return;
+  const p=P.find(x=>x.id===id);
+  if(p){
+    p.staleNote=note;
+    p.staleNoteDate=new Date().toISOString().split('T')[0];
+    save();renderAlerts();
+  }
+}
+
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+load();
+</script>
+</body>
+</html>
