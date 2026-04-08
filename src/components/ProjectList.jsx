@@ -1,4 +1,4 @@
-import { Plus, Search, ChevronRight, Star, ExternalLink, LayoutGrid, List, Columns3 } from 'lucide-react';
+import { Plus, Search, ChevronRight, Star, ExternalLink, LayoutGrid, List, Columns3, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useState } from 'react';
 import { PROJECT_STATUS_LABELS, PRIORITY_LABELS, PROJECT_TYPE_LABELS, PROJECT_CATEGORIES, PROJECT_CATEGORY_LABELS, getProjectProgress, getProjectStages } from '../store';
 
@@ -26,6 +26,8 @@ export default function ProjectList({ data, update, remove, navigate, onQuickAdd
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('card'); // card | kanban | table
+  const [sortKey, setSortKey] = useState('updatedAt'); // title | category | status | progress | techStack | updatedAt
+  const [sortDir, setSortDir] = useState('desc'); // asc | desc
 
   const filtered = data.projects.filter((p) => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
@@ -35,6 +37,38 @@ export default function ProjectList({ data, update, remove, navigate, onQuickAdd
       return p.title.toLowerCase().includes(q) || p.tags?.some((t) => t.toLowerCase().includes(q)) || (p.shortDescription || '').toLowerCase().includes(q) || (p.techStack || []).some((s) => s.toLowerCase().includes(q));
     }
     return true;
+  });
+
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'title' ? 'asc' : 'desc');
+    }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortKey !== col) return <ArrowUpDown size={11} className="text-text-muted/40" />;
+    return sortDir === 'asc' ? <ArrowUp size={11} className="text-primary" /> : <ArrowDown size={11} className="text-primary" />;
+  };
+
+  const statusOrder = { idea: 0, planning: 1, active: 2, on_hold: 3, blocked: 4, completed: 5, archived: 6 };
+
+  const sorted = [...filtered].sort((a, b) => {
+    let av, bv;
+    switch (sortKey) {
+      case 'title': av = a.title.toLowerCase(); bv = b.title.toLowerCase(); break;
+      case 'category': av = (PROJECT_CATEGORY_LABELS[a.category] || a.category || '').toLowerCase(); bv = (PROJECT_CATEGORY_LABELS[b.category] || b.category || '').toLowerCase(); break;
+      case 'status': av = statusOrder[a.status] ?? 9; bv = statusOrder[b.status] ?? 9; break;
+      case 'progress': av = getProjectProgress(data, a.id); bv = getProjectProgress(data, b.id); break;
+      case 'techStack': av = (a.techStack || []).length; bv = (b.techStack || []).length; break;
+      case 'updatedAt': av = a.updatedAt || ''; bv = b.updatedAt || ''; break;
+      default: av = a.updatedAt || ''; bv = b.updatedAt || '';
+    }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   const kanbanStatuses = ['idea', 'planning', 'active', 'on_hold', 'blocked', 'completed'];
@@ -90,7 +124,7 @@ export default function ProjectList({ data, update, remove, navigate, onQuickAdd
       {/* Card View */}
       {viewMode === 'card' && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((p) => {
+          {sorted.map((p) => {
             const progress = getProjectProgress(data, p.id);
             const stages = getProjectStages(data, p.id);
             const completedStages = stages.filter((s) => s.status === 'completed').length;
@@ -150,7 +184,7 @@ export default function ProjectList({ data, update, remove, navigate, onQuickAdd
       {viewMode === 'kanban' && (
         <div className="flex gap-4 overflow-x-auto pb-4">
           {kanbanStatuses.map((status) => {
-            const items = filtered.filter((p) => p.status === status);
+            const items = sorted.filter((p) => p.status === status);
             return (
               <div key={status} className="min-w-[260px] flex-shrink-0">
                 <div className="flex items-center gap-2 mb-3">
@@ -185,22 +219,30 @@ export default function ProjectList({ data, update, remove, navigate, onQuickAdd
         </div>
       )}
 
-      {/* Table View (from Proje 1) */}
+      {/* Table View */}
       {viewMode === 'table' && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-light dark:border-border-dark text-left text-xs text-text-muted">
-                <th className="py-2 px-3">Proje</th>
-                <th className="py-2 px-3">Kategori</th>
-                <th className="py-2 px-3">Durum</th>
-                <th className="py-2 px-3">İlerleme</th>
-                <th className="py-2 px-3">Teknolojiler</th>
-                <th className="py-2 px-3">Son Güncelleme</th>
+                {[
+                  { key: 'title', label: 'Proje' },
+                  { key: 'category', label: 'Kategori' },
+                  { key: 'status', label: 'Durum' },
+                  { key: 'progress', label: 'İlerleme' },
+                  { key: 'techStack', label: 'Teknolojiler' },
+                  { key: 'updatedAt', label: 'Son Güncelleme' },
+                ].map((col) => (
+                  <th key={col.key} className="py-2 px-3">
+                    <button onClick={() => toggleSort(col.key)} className="flex items-center gap-1 hover:text-text-dark dark:hover:text-white transition-colors">
+                      {col.label} <SortIcon col={col.key} />
+                    </button>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {sorted.map((p) => {
                 const progress = getProjectProgress(data, p.id);
                 return (
                   <tr key={p.id} onClick={() => navigate('project-detail', p.id)} className="border-b border-border-light/50 dark:border-border-dark/50 hover:bg-primary/5 cursor-pointer">
