@@ -200,12 +200,49 @@ export function loadData() {
       for (const key of Object.keys(defaults)) {
         if (!data[key]) data[key] = Array.isArray(defaults[key]) ? [] : defaults[key];
       }
+      // Auto-sync from projects.json in background
+      syncFromProjectsJson(data);
       return data;
     }
   } catch {}
   const data = importFromProjectsJson(null);
   saveData(data);
   return data;
+}
+
+// Fetch projects.json and merge new projects
+function syncFromProjectsJson(data) {
+  fetch('/projects.json?t=' + Date.now()).then((r) => r.ok ? r.json() : []).then((scanned) => {
+    let changed = false;
+    for (const p of scanned) {
+      const existingById = data.projects.find((x) => x.id === p.id);
+      const existingByTitle = data.projects.find((x) => x.title.toLowerCase() === (p.name || '').toLowerCase());
+      if (!existingById && !existingByTitle) {
+        data.projects.push({
+          id: p.id, brandId: null, title: p.name, slug: p.id,
+          shortDescription: p.description || '', fullDescription: p.description || '',
+          projectType: p.type || 'website', priority: (p.progress || 0) >= 80 ? 'high' : 'medium',
+          status: p.status === 'on_hold' ? 'on_hold' : p.status === 'archived' ? 'archived' : p.status === 'idea' ? 'idea' : 'active',
+          category: p.category || 'diger', stageSummary: '', objective: '', successCriteria: '',
+          currentBlockers: '', risks: '', nextStep: '', startDate: p.createdAt || now(), targetDate: '', completedAt: null,
+          tags: [...(p.stack || []), ...(p.tags || [])],
+          links: [...(p.url ? [{ label: 'Canlı Site', url: p.url }] : []), ...(p.repo ? [{ label: 'GitHub', url: p.repo }] : [])],
+          highlight: p.highlight || '', featured: p.featured || false, portfolio: false,
+          siteUrl: p.url || '', repoUrl: p.repo || '', folderPath: p.folder || '',
+          techStack: p.stack || [], toolsServices: [], pages: p.pages || 0, components: p.components || 0,
+          languages: p.languages || [], client: '', clientContact: '', progress: p.progress || 0,
+          createdAt: p.createdAt || now(), updatedAt: p.lastActivity || now(),
+        });
+        changed = true;
+      } else if (existingById && p.lastActivity && p.lastActivity > (existingById.updatedAt || '')) {
+        existingById.updatedAt = p.lastActivity;
+        existingById.pages = p.pages || existingById.pages;
+        existingById.components = p.components || existingById.components;
+        changed = true;
+      }
+    }
+    if (changed) saveData(data);
+  }).catch(() => {});
 }
 
 function createDefaultStructure() {
