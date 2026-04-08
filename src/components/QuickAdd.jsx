@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, FolderKanban, ListTodo, BookOpen, StickyNote, Brain } from 'lucide-react';
+import { X, FolderKanban, ListTodo, BookOpen, StickyNote, Brain, Link, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { PROJECT_TYPES, PROJECT_TYPE_LABELS, PRIORITIES, PRIORITY_LABELS, NOTE_TYPES, NOTE_TYPE_LABELS, PROJECT_CATEGORIES, PROJECT_CATEGORY_LABELS, initProjectStages, SCHEDULE_TYPES, SCHEDULE_TYPE_LABELS, DAY_LABELS } from '../store';
 
@@ -11,8 +11,70 @@ const types = [
   { id: 'prompt', label: 'Prompt', icon: Brain, color: 'text-purple' },
 ];
 
+// Tech stack detection from GitHub languages + topics
+const LANG_TO_STACK = {
+  'JavaScript': 'JavaScript', 'TypeScript': 'TypeScript', 'Python': 'Python', 'HTML': 'HTML',
+  'CSS': 'CSS', 'Astro': 'Astro', 'Vue': 'Vue', 'Svelte': 'Svelte', 'Go': 'Go',
+  'Rust': 'Rust', 'Java': 'Java', 'PHP': 'PHP', 'Ruby': 'Ruby', 'Swift': 'Swift', 'Kotlin': 'Kotlin',
+  'Shell': 'Bash', 'Dart': 'Dart', 'SCSS': 'SCSS',
+};
+
+const TOPIC_TO_STACK = {
+  'react': 'React', 'nextjs': 'Next.js', 'next': 'Next.js', 'vue': 'Vue', 'svelte': 'Svelte',
+  'astro': 'Astro', 'tailwindcss': 'Tailwind CSS', 'tailwind': 'Tailwind CSS',
+  'nodejs': 'Node.js', 'node': 'Node.js', 'express': 'Express', 'flask': 'Flask', 'django': 'Django',
+  'supabase': 'Supabase', 'firebase': 'Firebase', 'mongodb': 'MongoDB', 'postgresql': 'PostgreSQL',
+  'cloudflare': 'Cloudflare', 'vercel': 'Vercel', 'docker': 'Docker',
+  'typescript': 'TypeScript', 'graphql': 'GraphQL', 'rest-api': 'REST API',
+  'vite': 'Vite', 'webpack': 'Webpack', 'prisma': 'Prisma',
+};
+
+const TOPIC_TO_CATEGORY = {
+  'tourism': 'turizm', 'travel': 'turizm', 'hotel': 'turizm', 'booking': 'turizm',
+  'ecommerce': 'e-ticaret', 'e-commerce': 'e-ticaret', 'shop': 'e-ticaret',
+  'portfolio': 'kurumsal', 'corporate': 'kurumsal', 'landing-page': 'kurumsal',
+  'studio': 'studio', 'photography': 'studio',
+  'automation': 'yazilim', 'api': 'yazilim', 'cli': 'yazilim', 'tool': 'yazilim', 'bot': 'yazilim',
+};
+
+function detectProjectType(topics, languages) {
+  const all = [...(topics || []), ...Object.keys(languages || {})].map((t) => t.toLowerCase());
+  if (all.some((t) => ['ios', 'android', 'flutter', 'react-native', 'mobile'].includes(t))) return 'mobile_app';
+  if (all.some((t) => ['api', 'backend', 'rest-api', 'graphql', 'fastapi', 'express'].includes(t))) return 'api_backend';
+  if (all.some((t) => ['automation', 'bot', 'scraper', 'cli', 'workflow'].includes(t))) return 'automation';
+  if (all.some((t) => ['docs', 'documentation', 'wiki'].includes(t))) return 'documentation';
+  return 'website';
+}
+
+function detectCategory(topics) {
+  for (const topic of (topics || [])) {
+    const cat = TOPIC_TO_CATEGORY[topic.toLowerCase()];
+    if (cat) return cat;
+  }
+  return 'diger';
+}
+
+// Parse GitHub URL → owner/repo
+function parseGitHubUrl(url) {
+  const m = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+  if (m) return { owner: m[1], repo: m[2].replace(/\.git$/, '') };
+  return null;
+}
+
+// Parse npm URL
+function parseNpmUrl(url) {
+  const m = url.match(/npmjs\.com\/package\/([^/]+)/);
+  if (m) return m[1];
+  return null;
+}
+
 export default function QuickAdd({ type, setType, data, update, onClose }) {
   const today = new Date().toISOString().slice(0, 10);
+
+  // URL auto-fetch state
+  const [importUrl, setImportUrl] = useState('');
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
   const [taskTitle, setTaskTitle] = useState('');
   const [taskProject, setTaskProject] = useState('');
@@ -26,6 +88,10 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
   const [projPriority, setProjPriority] = useState('medium');
   const [projCategory, setProjCategory] = useState('diger');
   const [projHighlight, setProjHighlight] = useState('');
+  const [projRepoUrl, setProjRepoUrl] = useState('');
+  const [projSiteUrl, setProjSiteUrl] = useState('');
+  const [projTechStack, setProjTechStack] = useState('');
+  const [projTags, setProjTags] = useState('');
 
   const [learnTitle, setLearnTitle] = useState('');
   const [learnProvider, setLearnProvider] = useState('');
@@ -46,6 +112,90 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
   const [promptText, setPromptText] = useState('');
   const [promptProject, setPromptProject] = useState('');
 
+  // Auto-fetch from URL
+  const fetchFromUrl = async (url) => {
+    if (!url.trim()) return;
+    setFetching(true);
+    setFetchError('');
+
+    try {
+      const gh = parseGitHubUrl(url);
+      if (gh) {
+        // Fetch repo info
+        const res = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}`);
+        if (!res.ok) throw new Error('GitHub repo bulunamadı');
+        const repo = await res.json();
+
+        // Fetch languages
+        const langRes = await fetch(repo.languages_url);
+        const languages = langRes.ok ? await langRes.json() : {};
+
+        // Build tech stack from languages + topics
+        const stack = new Set();
+        for (const lang of Object.keys(languages)) {
+          if (LANG_TO_STACK[lang]) stack.add(LANG_TO_STACK[lang]);
+        }
+        for (const topic of (repo.topics || [])) {
+          if (TOPIC_TO_STACK[topic.toLowerCase()]) stack.add(TOPIC_TO_STACK[topic.toLowerCase()]);
+        }
+
+        // Try to detect framework from package.json
+        try {
+          const pkgRes = await fetch(`https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${repo.default_branch}/package.json`);
+          if (pkgRes.ok) {
+            const pkg = await pkgRes.json();
+            const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+            if (allDeps['next']) stack.add('Next.js');
+            if (allDeps['react']) stack.add('React');
+            if (allDeps['vue']) stack.add('Vue');
+            if (allDeps['svelte']) stack.add('Svelte');
+            if (allDeps['astro']) stack.add('Astro');
+            if (allDeps['tailwindcss'] || allDeps['@tailwindcss/vite']) stack.add('Tailwind CSS');
+            if (allDeps['vite']) stack.add('Vite');
+            if (allDeps['express']) stack.add('Express');
+            if (allDeps['@supabase/supabase-js']) stack.add('Supabase');
+            if (allDeps['prisma'] || allDeps['@prisma/client']) stack.add('Prisma');
+            if (allDeps['zod']) stack.add('Zod');
+            if (allDeps['framer-motion']) stack.add('Framer Motion');
+            if (allDeps['sharp']) stack.add('Sharp');
+            if (allDeps['resend']) stack.add('Resend');
+          }
+        } catch {}
+
+        // Fill form
+        setProjTitle(repo.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+        setProjDesc(repo.description || '');
+        setProjRepoUrl(repo.html_url);
+        setProjSiteUrl(repo.homepage || '');
+        setProjTechStack([...stack].join(', '));
+        setProjTags((repo.topics || []).join(', '));
+        setProjType(detectProjectType(repo.topics, languages));
+        setProjCategory(detectCategory(repo.topics));
+
+        if (repo.stargazers_count > 10) setProjPriority('high');
+        if (repo.homepage) setProjHighlight(repo.homepage);
+      } else {
+        // Non-GitHub URL — just set as site URL
+        setProjSiteUrl(url);
+        // Try to extract title from URL
+        const hostname = new URL(url).hostname.replace('www.', '');
+        setProjTitle(hostname.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+      }
+    } catch (err) {
+      setFetchError(err.message || 'URL okunamadı');
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const handleUrlPaste = (e) => {
+    const url = e.target.value;
+    setImportUrl(url);
+    if (url.match(/^https?:\/\/.+/)) {
+      fetchFromUrl(url);
+    }
+  };
+
   const submit = () => {
     if (type === 'task') {
       if (!taskTitle.trim()) return;
@@ -53,9 +203,14 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
     } else if (type === 'project') {
       if (!projTitle.trim()) return;
       const projId = uuidv4();
+      const techStack = projTechStack.split(',').map((s) => s.trim()).filter(Boolean);
+      const tags = projTags.split(',').map((s) => s.trim()).filter(Boolean);
       update('projects', {
-        id: projId, brandId: null, title: projTitle.trim(), slug: '', shortDescription: projDesc, fullDescription: projDesc, projectType: projType, priority: projPriority, status: 'idea', category: projCategory, stageSummary: '', objective: '', successCriteria: '', currentBlockers: '', risks: '', nextStep: '', startDate: today, targetDate: '', completedAt: null, tags: [], links: [],
-        highlight: projHighlight, featured: false, portfolio: false, siteUrl: '', repoUrl: '', folderPath: '', techStack: [], toolsServices: [], pages: 0, components: 0, languages: [], client: '', clientContact: '', progress: 0,
+        id: projId, brandId: null, title: projTitle.trim(), slug: '', shortDescription: projDesc, fullDescription: projDesc, projectType: projType, priority: projPriority, status: 'idea', category: projCategory, stageSummary: '', objective: '', successCriteria: '', currentBlockers: '', risks: '', nextStep: '', startDate: today, targetDate: '', completedAt: null, tags: [...techStack, ...tags], links: [
+          ...(projSiteUrl ? [{ label: 'Canlı Site', url: projSiteUrl }] : []),
+          ...(projRepoUrl ? [{ label: 'GitHub', url: projRepoUrl }] : []),
+        ],
+        highlight: projHighlight, featured: false, portfolio: false, siteUrl: projSiteUrl, repoUrl: projRepoUrl, folderPath: '', techStack, toolsServices: [], pages: 0, components: 0, languages: [], client: '', clientContact: '', progress: 0,
         createdAt: today, updatedAt: today,
       });
       const stages = initProjectStages(projId, projType);
@@ -119,7 +274,18 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
           </>}
 
           {type === 'project' && <>
-            <input type="text" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} placeholder="Proje adı *" className={inputClass} autoFocus />
+            {/* URL Auto-Import */}
+            <div className="relative">
+              <Link size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input type="url" value={importUrl} onChange={handleUrlPaste} placeholder="GitHub veya site linki yapıştır (otomatik doldurur)" className={`${inputClass} pl-9 ${fetching ? 'pr-10' : ''}`} autoFocus />
+              {fetching && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />}
+            </div>
+            {fetchError && <p className="text-xs text-danger">{fetchError}</p>}
+            {importUrl && !fetching && projTitle && (
+              <p className="text-[11px] text-success">Bilgiler otomatik dolduruldu</p>
+            )}
+
+            <input type="text" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} placeholder="Proje adı *" className={inputClass} />
             <input type="text" value={projDesc} onChange={(e) => setProjDesc(e.target.value)} placeholder="Kısa açıklama" className={inputClass} />
             <input type="text" value={projHighlight} onChange={(e) => setProjHighlight(e.target.value)} placeholder="Öne çıkan özellik" className={inputClass} />
             <div className="flex gap-3">
@@ -133,6 +299,12 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
             <select value={projPriority} onChange={(e) => setProjPriority(e.target.value)} className={`w-full ${selectClass}`}>
               {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
             </select>
+            <input type="text" value={projTechStack} onChange={(e) => setProjTechStack(e.target.value)} placeholder="Teknolojiler (virgülle ayır)" className={inputClass} />
+            <input type="text" value={projTags} onChange={(e) => setProjTags(e.target.value)} placeholder="Etiketler (virgülle ayır)" className={inputClass} />
+            <div className="flex gap-3">
+              <input type="url" value={projRepoUrl} onChange={(e) => setProjRepoUrl(e.target.value)} placeholder="GitHub URL" className={`flex-1 ${inputClass}`} />
+              <input type="url" value={projSiteUrl} onChange={(e) => setProjSiteUrl(e.target.value)} placeholder="Site URL" className={`flex-1 ${inputClass}`} />
+            </div>
           </>}
 
           {type === 'learning' && <>
