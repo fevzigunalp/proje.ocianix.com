@@ -11,8 +11,15 @@
     "highlight": "",
     "url": "",
     "repo": "https://github.com/fevzigunalp/cappadocia-shooting-website",
-    "stack": ["Astro", "Sharp"],
-    "languages": ["Astro", "TypeScript", "CSS"],
+    "stack": [
+      "Astro",
+      "Sharp"
+    ],
+    "languages": [
+      "Astro",
+      "TypeScript",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/1.Project_Cappadocia_Shooting/",
     "lastActivity": "2026-03-30",
@@ -21,11 +28,10 @@
     "totalFiles": 1489,
     "srcFiles": 155,
     "createdAt": "2026-02-25"
-  }
-,
+  },
   {
     "id": "cekimatolyesi-v2",
-    "name": "cekimatolyesi v2",
+    "name": "Fairy Light Studio",
     "description": "",
     "type": "website",
     "category": "studio",
@@ -33,10 +39,21 @@
     "progress": 80,
     "featured": false,
     "highlight": "",
-    "url": "",
+    "url": "https://fairylightstudio.com",
     "repo": "https://github.com/fevzigunalp/cekimatolyesi-v2",
-    "stack": ["Framer Motion", "Next.js", "React", "Sharp", "Tailwind CSS", "TypeScript"],
-    "languages": ["TypeScript", "JavaScript", "CSS"],
+    "stack": [
+      "Framer Motion",
+      "Next.js",
+      "React",
+      "Sharp",
+      "Tailwind CSS",
+      "TypeScript"
+    ],
+    "languages": [
+      "TypeScript",
+      "JavaScript",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/2.Project_Ocianix//web/cekimatolyesi-v2/",
     "lastActivity": "2026-03-30",
@@ -45,11 +62,10 @@
     "totalFiles": 130,
     "srcFiles": 89,
     "createdAt": "2026-03-27"
-  }
-,
+  },
   {
     "id": "ocianix-com",
-    "name": "ocianix com",
+    "name": "Ocianix.com",
     "description": "",
     "type": "website",
     "category": "diger",
@@ -57,10 +73,18 @@
     "progress": 50,
     "featured": false,
     "highlight": "",
-    "url": "",
+    "url": "https://ocianix.com",
     "repo": "https://github.com/ocianixhq/web-ocianix-com",
-    "stack": ["Astro", "Tailwind CSS", "Supabase"],
-    "languages": ["Astro", "TypeScript", "CSS"],
+    "stack": [
+      "Astro",
+      "Tailwind CSS",
+      "Supabase"
+    ],
+    "languages": [
+      "Astro",
+      "TypeScript",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/2.Project_Ocianix//web/ocianix-com/",
     "lastActivity": "2026-03-30",
@@ -69,8 +93,7 @@
     "totalFiles": 27,
     "srcFiles": 16,
     "createdAt": "2026-03-27"
-  }
-,
+  },
   {
     "id": "4-project-website",
     "name": "Website",
@@ -93,8 +116,7 @@
     "totalFiles": 2,
     "srcFiles": 0,
     "createdAt": "2026-03-27"
-  }
-,
+  },
   {
     "id": "5-project-site-adi",
     "name": "Site Adi",
@@ -117,8 +139,7 @@
     "totalFiles": 0,
     "srcFiles": 0,
     "createdAt": "2026-04-08"
-  }
-,
+  },
   {
     "id": "6-project-kapadokya-teklif",
     "name": "Kapadokya Teklif",
@@ -131,8 +152,22 @@
     "highlight": "",
     "url": "",
     "repo": "https://github.com/fevzigunalp/teklif-kapadokya",
-    "stack": ["Supabase", "Next.js", "React", "Resend", "Tailwind CSS", "TypeScript", "Zod", "Sharp"],
-    "languages": ["HTML", "JavaScript", "TypeScript", "CSS"],
+    "stack": [
+      "Supabase",
+      "Next.js",
+      "React",
+      "Resend",
+      "Tailwind CSS",
+      "TypeScript",
+      "Zod",
+      "Sharp"
+    ],
+    "languages": [
+      "HTML",
+      "JavaScript",
+      "TypeScript",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/6.Project_Kapadokya_Teklif/",
     "lastActivity": "2026-03-31",
@@ -141,8 +176,7 @@
     "totalFiles": 1537,
     "srcFiles": 362,
     "createdAt": "2026-03-29"
-  }
-,
+  },
   {
     "id": "7-project-tourguidetrack",
     "name": "TourGuideTrack",
@@ -155,8 +189,17 @@
     "highlight": "",
     "url": "",
     "repo": "https://github.com/fevzigunalp/TourGuideTrack",
-    "stack": ["React", "Tailwind CSS", "TypeScript"],
-    "languages": ["TypeScript", "JavaScript", "HTML", "CSS"],
+    "stack": [
+      "React",
+      "Tailwind CSS",
+      "TypeScript"
+    ],
+    "languages": [
+      "TypeScript",
+      "JavaScript",
+      "HTML",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/7.Project_TourGuideTrack/",
     "lastActivity": "2026-03-31",
@@ -165,8 +208,7 @@
     "totalFiles": 73,
     "srcFiles": 39,
     "createdAt": "2026-02-20"
-  }
-,
+  },
   {
     "id": "8-project-above-cappadocia",
     "name": "Above Cappadocia",
@@ -179,8 +221,20 @@
     "highlight": "",
     "url": "",
     "repo": "https://github.com/ocianixhq/above-cappadocia",
-    "stack": ["Supabase", "Framer Motion", "Next.js", "React", "Puppeteer", "Tailwind CSS", "TypeScript", "Zod"],
-    "languages": ["TypeScript", "CSS"],
+    "stack": [
+      "Supabase",
+      "Framer Motion",
+      "Next.js",
+      "React",
+      "Puppeteer",
+      "Tailwind CSS",
+      "TypeScript",
+      "Zod"
+    ],
+    "languages": [
+      "TypeScript",
+      "CSS"
+    ],
     "tags": [],
     "folder": "/mnt/d/8. AI_Projects/1. Ubuntu_Projects/8.Project_Above_Cappadocia/",
     "lastActivity": "2026-04-08",
@@ -189,5 +243,163 @@
     "totalFiles": 160,
     "srcFiles": 221,
     "createdAt": "2026-03-27"
+  },
+  {
+    "id": "the-veloria-os",
+    "name": "The Veloria OS",
+    "description": "Kapadokya Teklif admin paneli / operasyon sistemi",
+    "type": "automation",
+    "category": "yazilim",
+    "status": "active",
+    "progress": 50,
+    "featured": false,
+    "highlight": "",
+    "url": "https://panel.kapadokyateklif.com",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "admin-panel",
+      "operasyon"
+    ],
+    "folder": "",
+    "lastActivity": "2026-04-08",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "anadolu-dusunce-arsivi",
+    "name": "Anadolu Düşünce Arşivi",
+    "description": "Anadolu düşünce atlası web sitesi",
+    "type": "website",
+    "category": "diger",
+    "status": "active",
+    "progress": 60,
+    "featured": false,
+    "highlight": "",
+    "url": "https://anadoludusunceatlasi.com",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "kultur",
+      "arsiv"
+    ],
+    "folder": "",
+    "lastActivity": "2026-03-18",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-01-01"
+  },
+  {
+    "id": "travel-agency-b2b-finder",
+    "name": "Travel Agency B2B Finder",
+    "description": "Seyahat acentesi B2B eşleştirme platformu",
+    "type": "website",
+    "category": "turizm",
+    "status": "on_hold",
+    "progress": 30,
+    "featured": false,
+    "highlight": "",
+    "url": "",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "turizm",
+      "b2b",
+      "platform"
+    ],
+    "folder": "",
+    "lastActivity": "2026-03-08",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-02-01"
+  },
+  {
+    "id": "cappadocia-wedding-planners",
+    "name": "Cappadocia Wedding Planners",
+    "description": "Kapadokya düğün organizatörleri web sitesi",
+    "type": "website",
+    "category": "turizm",
+    "status": "on_hold",
+    "progress": 30,
+    "featured": false,
+    "highlight": "",
+    "url": "",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "turizm",
+      "düğün",
+      "organizasyon"
+    ],
+    "folder": "",
+    "lastActivity": "2026-03-08",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-02-01"
+  },
+  {
+    "id": "guide-fevzi-web",
+    "name": "Guide Fevzi",
+    "description": "Rehber Fevzi kişisel web sitesi",
+    "type": "website",
+    "category": "turizm",
+    "status": "on_hold",
+    "progress": 20,
+    "featured": false,
+    "highlight": "",
+    "url": "",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "turizm",
+      "rehber",
+      "kisisel"
+    ],
+    "folder": "",
+    "lastActivity": "2026-03-08",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-02-01"
+  },
+  {
+    "id": "portfolyo",
+    "name": "Portfolyo",
+    "description": "Portfolyo web sitesi",
+    "type": "website",
+    "category": "kurumsal",
+    "status": "on_hold",
+    "progress": 20,
+    "featured": false,
+    "highlight": "",
+    "url": "",
+    "repo": "",
+    "stack": [],
+    "languages": [],
+    "tags": [
+      "portfolyo"
+    ],
+    "folder": "",
+    "lastActivity": "2026-03-08",
+    "pages": 0,
+    "components": 0,
+    "totalFiles": 0,
+    "srcFiles": 0,
+    "createdAt": "2026-02-01"
   }
 ]
