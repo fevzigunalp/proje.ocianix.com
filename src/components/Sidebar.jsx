@@ -16,12 +16,19 @@ const navItems = [
 export default function Sidebar({ view, navigate, dark, setDark, open, onClose, data }) {
   const todayCount = getTodayTasks(data).length;
   const overdueCount = getOverdueTasks(data).length;
+  const totalProjects = (data.projects || []).length;
   const activeCount = getActiveProjects(data).length;
 
   const getBadge = (id) => {
     if (id === 'tasks') return todayCount + overdueCount || null;
-    if (id === 'projects') return activeCount || null;
+    if (id === 'projects') return totalProjects || null;
     if (id === 'learning') return getActiveLearning(data).length || null;
+    return null;
+  };
+
+  const getTooltip = (id) => {
+    if (id === 'projects') return `Toplam ${totalProjects} proje · ${activeCount} aktif`;
+    if (id === 'tasks') return `${todayCount} bugün · ${overdueCount} gecikmiş`;
     return null;
   };
 
@@ -56,6 +63,7 @@ export default function Sidebar({ view, navigate, dark, setDark, open, onClose, 
             <button
               key={item.id}
               onClick={() => navigate(item.id)}
+              title={getTooltip(item.id) || undefined}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-primary/10 text-primary dark:text-primary-light'
