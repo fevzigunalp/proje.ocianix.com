@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import ProjectEditModal from './components/ProjectEditModal';
+import ProjectDeleteConfirm from './components/ProjectDeleteConfirm';
 import SyncSettings from './components/SyncSettings';
 import TaskList from './components/TaskList';
 import LearningList from './components/LearningList';
@@ -25,6 +26,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState(null);
   const [editProject, setEditProject] = useState(null); // { ...project } or {} for new
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null); // project to delete
 
   useEffect(() => { saveData(data); }, [data]);
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function App() {
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto pb-24">
           {view === 'dashboard' && <Dashboard data={data} navigate={navigate} update={update} />}
           {view === 'projects' && <ProjectList data={data} navigate={navigate} onEdit={(p) => setEditProject(p)} onNew={() => setEditProject({})} />}
-          {view === 'project-detail' && <ProjectDetail data={data} projectId={selectedId} update={update} remove={remove} navigate={navigate} updateData={updateData} onEdit={(p) => setEditProject(p)} onDelete={async (id) => { await deleteProject(setData, id); navigate('projects'); }} />}
+          {view === 'project-detail' && <ProjectDetail data={data} projectId={selectedId} update={update} remove={remove} navigate={navigate} updateData={updateData} onEdit={(p) => setEditProject(p)} onDelete={(p) => setDeleteProjectTarget(p)} />}
           {view === 'sync' && <SyncSettings data={data} setData={setData} />}
           {view === 'tasks' && <TaskList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('task')} />}
           {view === 'learning' && <LearningList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('learning')} />}
@@ -132,6 +134,18 @@ export default function App() {
           onSave={async (p) => {
             await pushProject(setData, p);
             setEditProject(null);
+          }}
+        />
+      )}
+
+      {deleteProjectTarget && (
+        <ProjectDeleteConfirm
+          project={deleteProjectTarget}
+          onClose={() => setDeleteProjectTarget(null)}
+          onConfirm={async (id) => {
+            await deleteProject(setData, id);
+            setDeleteProjectTarget(null);
+            if (view === 'project-detail') navigate('projects');
           }}
         />
       )}

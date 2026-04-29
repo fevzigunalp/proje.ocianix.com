@@ -26,6 +26,7 @@
  * M: Genel Açıklama
  * N: id              (otomatik — site oluşturuyor / koruyor)
  * O: updatedAt       (otomatik — her yazıldığında ISO timestamp)
+ * P: deleted         (soft delete bayrağı — TRUE/FALSE; readAllProjects deleted=TRUE olanları döndürmez)
  */
 
 const SHEET_NAME = 'Sayfa1';                   // sheet sekmesi adı
@@ -47,6 +48,7 @@ const HEADERS = [
   'Genel Açıklama',
   'id',
   'updatedAt',
+  'deleted',
 ];
 
 // Excel kolon → JSON alanı eşleşmesi
@@ -66,6 +68,7 @@ const COL_MAP = [
   'generalNote',        // M
   'id',                 // N
   'updatedAt',          // O
+  'deleted',            // P
 ];
 
 function getSheet_() {
@@ -159,7 +162,14 @@ function rowToProject_(row, rowNumber) {
   return obj;
 }
 
-function readAllProjects_() {
+function isDeleted_(v) {
+  if (v === true) return true;
+  if (typeof v === 'string' && v.toUpperCase() === 'TRUE') return true;
+  return false;
+}
+
+function readAllProjects_(opts) {
+  const includeDeleted = !!(opts && opts.includeDeleted);
   const sh = getSheet_();
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return [];
@@ -170,7 +180,9 @@ function readAllProjects_() {
     // skip fully blank rows
     const row = values[i];
     if (row.every(v => v === '' || v === null)) continue;
-    list.push(rowToProject_(row, i + 2));
+    const proj = rowToProject_(row, i + 2);
+    if (!includeDeleted && isDeleted_(proj.deleted)) continue;
+    list.push(proj);
   }
   return list;
 }
@@ -203,6 +215,7 @@ function projectToRow_(p) {
     p.generalNote || '',
     p.id,
     nowIso_(),
+    isDeleted_(p.deleted) ? 'TRUE' : 'FALSE',
   ];
 }
 
@@ -218,7 +231,8 @@ function checkAuth_(token) {
 // ---- HTTP handlers ----
 function doGet(e) {
   try {
-    const projects = readAllProjects_();
+    const includeDeleted = e && e.parameter && (e.parameter.include_deleted === 'true' || e.parameter.include_deleted === '1');
+    const projects = readAllProjects_({ includeDeleted: includeDeleted });
     return jsonOut_({ ok: true, projects: projects, count: projects.length, ts: nowIso_() });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err) });
@@ -250,11 +264,33 @@ function doPost(e) {
         return jsonOut_({ ok: true, project: rowToProject_(rowVals, existing || sh.getLastRow()) });
       }
       if (action === 'delete') {
+        // SOFT DELETE — fiziksel silme yapılmaz, deleted=TRUE işaretlenir
+        const id = body.id;
+        const r = findRowById_(id);
+        if (!r) return jsonOut_({ ok: false, error: 'not_found' });
+        const cur = sh.getRange(r, 1, 1, HEADERS.length).getValues()[0];
+        const proj = rowToProject_(cur, r);
+        proj.deleted = true;
+        sh.getRange(r, 1, 1, HEADERS.length).setValues([projectToRow_(proj)]);
+        return jsonOut_({ ok: true, deletedId: id, soft: true });
+      }
+      if (action === 'restore') {
+        const id = body.id;
+        const r = findRowById_(id);
+        if (!r) return jsonOut_({ ok: false, error: 'not_found' });
+        const cur = sh.getRange(r, 1, 1, HEADERS.length).getValues()[0];
+        const proj = rowToProject_(cur, r);
+        proj.deleted = false;
+        sh.getRange(r, 1, 1, HEADERS.length).setValues([projectToRow_(proj)]);
+        return jsonOut_({ ok: true, restoredId: id });
+      }
+      if (action === 'hardDelete') {
+        // SADECE admin elle çağırırsa kullan — fiziksel sil
         const id = body.id;
         const r = findRowById_(id);
         if (!r) return jsonOut_({ ok: false, error: 'not_found' });
         sh.deleteRow(r);
-        return jsonOut_({ ok: true, deletedId: id });
+        return jsonOut_({ ok: true, hardDeletedId: id });
       }
       if (action === 'replaceAll') {
         const arr = body.projects || [];

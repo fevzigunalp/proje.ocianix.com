@@ -116,11 +116,7 @@ export default function ProjectDetail({ data, projectId, update, remove, navigat
           )}
           {onDelete && (
             <button
-              onClick={async () => {
-                if (confirm(`"${project.name}" projesini silmek istediğine emin misin?`)) {
-                  await onDelete(project.id);
-                }
-              }}
+              onClick={() => onDelete(project)}
               className="px-3 py-1.5 bg-danger/10 text-danger border border-danger/20 rounded-lg text-xs font-medium hover:bg-danger/20 transition-colors"
             >
               Sil
