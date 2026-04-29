@@ -1,0 +1,11 @@
+# Default — tüm yollar: cache'leme (hash'li asset'ler aşağıdaki kuralla override)
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Hash'li asset'ler: 1 yıl cache (içerik immutable, daha spesifik kural önce)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Veri dosyası: kısa cache (Sheet sync olmadığı zamanlarda fallback)
+/projects.json
+  Cache-Control: public, max-age=60, must-revalidate
