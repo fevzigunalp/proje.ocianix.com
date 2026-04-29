@@ -19,7 +19,7 @@ export default function SearchView({ data, navigate }) {
 
   const match = (text) => text && text.toLowerCase().includes(q);
 
-  const projects = data.projects.filter((p) => match(p.title) || match(p.shortDescription) || match(p.highlight) || p.tags?.some((t) => match(t)) || p.techStack?.some((t) => match(t)));
+  const projects = data.projects.filter((p) => match(p.name) || match(p.description) || match(p.businessArea) || match(p.subBusiness) || match(p.ownerCompany) || match(p.websiteUrlRaw) || (p.stack || []).some((t) => match(t)));
   const tasks = data.tasks.filter((t) => match(t.title) || match(t.description));
   const learning = data.learningItems.filter((l) => match(l.title) || match(l.provider) || l.tags?.some((t) => match(t)));
   const notes = data.notes.filter((n) => match(n.title) || match(n.content));
@@ -53,8 +53,8 @@ export default function SearchView({ data, navigate }) {
         <Section icon={FolderKanban} title="Projeler" count={projects.length}>
           {projects.map((p) => (
             <button key={p.id} onClick={() => navigate('project-detail', p.id)} className="w-full text-left p-2 rounded-lg hover:bg-primary/5 transition-colors">
-              <p className="text-sm font-medium">{p.title}</p>
-              <p className="text-[10px] text-text-muted">{PROJECT_STATUS_LABELS[p.status]} · {p.shortDescription}</p>
+              <p className="text-sm font-medium">{p.name}</p>
+              <p className="text-[10px] text-text-muted">{PROJECT_STATUS_LABELS[p.status]} · {p.businessArea || p.description || ''}</p>
             </button>
           ))}
         </Section>

@@ -1,97 +1,24 @@
 import { useState } from 'react';
-import { X, FolderKanban, ListTodo, BookOpen, StickyNote, Brain, Link, Loader2 } from 'lucide-react';
+import { X, ListTodo, BookOpen, StickyNote, Brain } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { PROJECT_TYPES, PROJECT_TYPE_LABELS, PRIORITIES, PRIORITY_LABELS, NOTE_TYPES, NOTE_TYPE_LABELS, PROJECT_CATEGORIES, PROJECT_CATEGORY_LABELS, initProjectStages, SCHEDULE_TYPES, SCHEDULE_TYPE_LABELS, DAY_LABELS } from '../store';
+import { PRIORITIES, PRIORITY_LABELS, NOTE_TYPES, NOTE_TYPE_LABELS, SCHEDULE_TYPES, SCHEDULE_TYPE_LABELS, DAY_LABELS } from '../store';
 
+// Projeler Excel'den (projects.json) geliyor — UI'dan oluşturulamaz.
 const types = [
   { id: 'task', label: 'Görev', icon: ListTodo, color: 'text-accent' },
-  { id: 'project', label: 'Proje', icon: FolderKanban, color: 'text-primary' },
   { id: 'learning', label: 'Eğitim', icon: BookOpen, color: 'text-warm' },
   { id: 'note', label: 'Not', icon: StickyNote, color: 'text-warm' },
   { id: 'prompt', label: 'Prompt', icon: Brain, color: 'text-purple' },
 ];
 
-// Tech stack detection from GitHub languages + topics
-const LANG_TO_STACK = {
-  'JavaScript': 'JavaScript', 'TypeScript': 'TypeScript', 'Python': 'Python', 'HTML': 'HTML',
-  'CSS': 'CSS', 'Astro': 'Astro', 'Vue': 'Vue', 'Svelte': 'Svelte', 'Go': 'Go',
-  'Rust': 'Rust', 'Java': 'Java', 'PHP': 'PHP', 'Ruby': 'Ruby', 'Swift': 'Swift', 'Kotlin': 'Kotlin',
-  'Shell': 'Bash', 'Dart': 'Dart', 'SCSS': 'SCSS',
-};
-
-const TOPIC_TO_STACK = {
-  'react': 'React', 'nextjs': 'Next.js', 'next': 'Next.js', 'vue': 'Vue', 'svelte': 'Svelte',
-  'astro': 'Astro', 'tailwindcss': 'Tailwind CSS', 'tailwind': 'Tailwind CSS',
-  'nodejs': 'Node.js', 'node': 'Node.js', 'express': 'Express', 'flask': 'Flask', 'django': 'Django',
-  'supabase': 'Supabase', 'firebase': 'Firebase', 'mongodb': 'MongoDB', 'postgresql': 'PostgreSQL',
-  'cloudflare': 'Cloudflare', 'vercel': 'Vercel', 'docker': 'Docker',
-  'typescript': 'TypeScript', 'graphql': 'GraphQL', 'rest-api': 'REST API',
-  'vite': 'Vite', 'webpack': 'Webpack', 'prisma': 'Prisma',
-};
-
-const TOPIC_TO_CATEGORY = {
-  'tourism': 'turizm', 'travel': 'turizm', 'hotel': 'turizm', 'booking': 'turizm',
-  'ecommerce': 'e-ticaret', 'e-commerce': 'e-ticaret', 'shop': 'e-ticaret',
-  'portfolio': 'kurumsal', 'corporate': 'kurumsal', 'landing-page': 'kurumsal',
-  'studio': 'studio', 'photography': 'studio',
-  'automation': 'yazilim', 'api': 'yazilim', 'cli': 'yazilim', 'tool': 'yazilim', 'bot': 'yazilim',
-};
-
-function detectProjectType(topics, languages) {
-  const all = [...(topics || []), ...Object.keys(languages || {})].map((t) => t.toLowerCase());
-  if (all.some((t) => ['ios', 'android', 'flutter', 'react-native', 'mobile'].includes(t))) return 'mobile_app';
-  if (all.some((t) => ['api', 'backend', 'rest-api', 'graphql', 'fastapi', 'express'].includes(t))) return 'api_backend';
-  if (all.some((t) => ['automation', 'bot', 'scraper', 'cli', 'workflow'].includes(t))) return 'automation';
-  if (all.some((t) => ['docs', 'documentation', 'wiki'].includes(t))) return 'documentation';
-  return 'website';
-}
-
-function detectCategory(topics) {
-  for (const topic of (topics || [])) {
-    const cat = TOPIC_TO_CATEGORY[topic.toLowerCase()];
-    if (cat) return cat;
-  }
-  return 'diger';
-}
-
-// Parse GitHub URL → owner/repo
-function parseGitHubUrl(url) {
-  const m = url.match(/github\.com\/([^/]+)\/([^/]+)/);
-  if (m) return { owner: m[1], repo: m[2].replace(/\.git$/, '') };
-  return null;
-}
-
-// Parse npm URL
-function parseNpmUrl(url) {
-  const m = url.match(/npmjs\.com\/package\/([^/]+)/);
-  if (m) return m[1];
-  return null;
-}
-
 export default function QuickAdd({ type, setType, data, update, onClose }) {
   const today = new Date().toISOString().slice(0, 10);
-
-  // URL auto-fetch state
-  const [importUrl, setImportUrl] = useState('');
-  const [fetching, setFetching] = useState(false);
-  const [fetchError, setFetchError] = useState('');
 
   const [taskTitle, setTaskTitle] = useState('');
   const [taskProject, setTaskProject] = useState('');
   const [taskPriority, setTaskPriority] = useState('medium');
   const [taskDue, setTaskDue] = useState('');
   const [taskToday, setTaskToday] = useState(true);
-
-  const [projTitle, setProjTitle] = useState('');
-  const [projDesc, setProjDesc] = useState('');
-  const [projType, setProjType] = useState('website');
-  const [projPriority, setProjPriority] = useState('medium');
-  const [projCategory, setProjCategory] = useState('diger');
-  const [projHighlight, setProjHighlight] = useState('');
-  const [projRepoUrl, setProjRepoUrl] = useState('');
-  const [projSiteUrl, setProjSiteUrl] = useState('');
-  const [projTechStack, setProjTechStack] = useState('');
-  const [projTags, setProjTags] = useState('');
 
   const [learnTitle, setLearnTitle] = useState('');
   const [learnProvider, setLearnProvider] = useState('');
@@ -112,120 +39,24 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
   const [promptText, setPromptText] = useState('');
   const [promptProject, setPromptProject] = useState('');
 
-  // Auto-fetch from URL
-  const fetchFromUrl = async (url) => {
-    if (!url.trim()) return;
-    setFetching(true);
-    setFetchError('');
-
-    try {
-      const gh = parseGitHubUrl(url);
-      if (gh) {
-        // Fetch repo info
-        const res = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}`);
-        if (!res.ok) throw new Error('GitHub repo bulunamadı');
-        const repo = await res.json();
-
-        // Fetch languages
-        const langRes = await fetch(repo.languages_url);
-        const languages = langRes.ok ? await langRes.json() : {};
-
-        // Build tech stack from languages + topics
-        const stack = new Set();
-        for (const lang of Object.keys(languages)) {
-          if (LANG_TO_STACK[lang]) stack.add(LANG_TO_STACK[lang]);
-        }
-        for (const topic of (repo.topics || [])) {
-          if (TOPIC_TO_STACK[topic.toLowerCase()]) stack.add(TOPIC_TO_STACK[topic.toLowerCase()]);
-        }
-
-        // Try to detect framework from package.json
-        try {
-          const pkgRes = await fetch(`https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${repo.default_branch}/package.json`);
-          if (pkgRes.ok) {
-            const pkg = await pkgRes.json();
-            const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-            if (allDeps['next']) stack.add('Next.js');
-            if (allDeps['react']) stack.add('React');
-            if (allDeps['vue']) stack.add('Vue');
-            if (allDeps['svelte']) stack.add('Svelte');
-            if (allDeps['astro']) stack.add('Astro');
-            if (allDeps['tailwindcss'] || allDeps['@tailwindcss/vite']) stack.add('Tailwind CSS');
-            if (allDeps['vite']) stack.add('Vite');
-            if (allDeps['express']) stack.add('Express');
-            if (allDeps['@supabase/supabase-js']) stack.add('Supabase');
-            if (allDeps['prisma'] || allDeps['@prisma/client']) stack.add('Prisma');
-            if (allDeps['zod']) stack.add('Zod');
-            if (allDeps['framer-motion']) stack.add('Framer Motion');
-            if (allDeps['sharp']) stack.add('Sharp');
-            if (allDeps['resend']) stack.add('Resend');
-          }
-        } catch {}
-
-        // Fill form
-        setProjTitle(repo.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
-        setProjDesc(repo.description || '');
-        setProjRepoUrl(repo.html_url);
-        setProjSiteUrl(repo.homepage || '');
-        setProjTechStack([...stack].join(', '));
-        setProjTags((repo.topics || []).join(', '));
-        setProjType(detectProjectType(repo.topics, languages));
-        setProjCategory(detectCategory(repo.topics));
-
-        if (repo.stargazers_count > 10) setProjPriority('high');
-        if (repo.homepage) setProjHighlight(repo.homepage);
-      } else {
-        // Non-GitHub URL — just set as site URL
-        setProjSiteUrl(url);
-        // Try to extract title from URL
-        const hostname = new URL(url).hostname.replace('www.', '');
-        setProjTitle(hostname.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
-      }
-    } catch (err) {
-      setFetchError(err.message || 'URL okunamadı');
-    } finally {
-      setFetching(false);
-    }
-  };
-
-  const handleUrlPaste = (e) => {
-    const url = e.target.value;
-    setImportUrl(url);
-    if (url.match(/^https?:\/\/.+/)) {
-      fetchFromUrl(url);
-    }
-  };
+  // If parent opened with 'project' (from old call), redirect to task
+  const safeType = type === 'project' ? 'task' : type;
 
   const submit = () => {
-    if (type === 'task') {
+    if (safeType === 'task') {
       if (!taskTitle.trim()) return;
       update('tasks', { id: uuidv4(), projectId: taskProject || null, phaseId: null, learningItemId: null, parentTaskId: null, title: taskTitle.trim(), description: '', status: 'todo', priority: taskPriority, energyLevel: 'medium', estimatedMinutes: null, actualMinutes: null, dueDate: taskDue || null, startDate: null, completedAt: null, isToday: taskToday, isNextStep: false, isRecurring: false, blockedReason: '', resultNote: '', tags: [], createdAt: today, updatedAt: today });
-    } else if (type === 'project') {
-      if (!projTitle.trim()) return;
-      const projId = uuidv4();
-      const techStack = projTechStack.split(',').map((s) => s.trim()).filter(Boolean);
-      const tags = projTags.split(',').map((s) => s.trim()).filter(Boolean);
-      update('projects', {
-        id: projId, brandId: null, title: projTitle.trim(), slug: '', shortDescription: projDesc, fullDescription: projDesc, projectType: projType, priority: projPriority, status: 'idea', category: projCategory, stageSummary: '', objective: '', successCriteria: '', currentBlockers: '', risks: '', nextStep: '', startDate: today, targetDate: '', completedAt: null, tags: [...techStack, ...tags], links: [
-          ...(projSiteUrl ? [{ label: 'Canlı Site', url: projSiteUrl }] : []),
-          ...(projRepoUrl ? [{ label: 'GitHub', url: projRepoUrl }] : []),
-        ],
-        highlight: projHighlight, featured: false, portfolio: false, siteUrl: projSiteUrl, repoUrl: projRepoUrl, folderPath: '', techStack, toolsServices: [], pages: 0, components: 0, languages: [], client: '', clientContact: '', progress: 0,
-        createdAt: today, updatedAt: today,
-      });
-      const stages = initProjectStages(projId, projType);
-      stages.forEach((s) => update('projectStages', s));
-    } else if (type === 'learning') {
+    } else if (safeType === 'learning') {
       if (!learnTitle.trim()) return;
       const learnId = uuidv4();
       update('learningItems', { id: learnId, brandId: null, relatedProjectId: null, title: learnTitle.trim(), provider: learnProvider, instructorName: '', sourceLink: '', categoryIds: learnCategoryIds, level: 'beginner', status: 'planned', formatType: 'course', priceAmount: 0, currency: 'TRY', purchasedAt: null, startDate: '', targetFinishDate: '', completedAt: null, totalDurationMinutes: 0, progressPercent: 0, certificateAvailable: false, certificateUrl: '', summary: '', keyOutcomes: '', nextStep: '', reviewNote: '', tags: [], createdAt: today, updatedAt: today });
       if (learnScheduleType) {
         update('learningSchedules', { id: uuidv4(), learningItemId: learnId, scheduleType: learnScheduleType, date: learnScheduleType === 'one_time' ? learnScheduleDate : null, timeStart: learnTimeStart || null, timeEnd: learnTimeEnd || null, weeklyDays: learnScheduleType === 'weekly' ? learnWeeklyDays : [], weeklyTimeStart: learnTimeStart || null, weeklyTimeEnd: learnTimeEnd || null, monthlyDays: [], monthlyTimeStart: null, monthlyTimeEnd: null, customDates: [], customTimeStart: null, customTimeEnd: null, hoursPerWeek: learnScheduleType === 'flexible_hours' ? learnHoursPerWeek : 0, preferredDays: learnScheduleType === 'flexible_hours' ? learnWeeklyDays : [], isActive: true, startDate: today, endDate: null, reminderMinutes: 0, createdAt: today, updatedAt: today });
       }
-    } else if (type === 'note') {
+    } else if (safeType === 'note') {
       if (!noteTitle.trim()) return;
       update('notes', { id: uuidv4(), brandId: null, projectId: noteProject || null, phaseId: null, taskId: null, learningItemId: null, title: noteTitle.trim(), noteType, content: noteContent, summary: '', importanceLevel: 'medium', decisionFlag: false, nextAction: '', sourceType: 'manual', sourceLink: '', tags: [], createdAt: today, updatedAt: today });
-    } else if (type === 'prompt') {
+    } else if (safeType === 'prompt') {
       if (!promptTitle.trim()) return;
       update('prompts', { id: uuidv4(), projectId: promptProject || null, taskId: null, title: promptTitle.trim(), promptText, promptType: 'other', modelName: 'Claude', resultSummary: '', status: 'draft', createdAt: today, updatedAt: today });
     }
@@ -247,7 +78,7 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
           {types.map((t) => {
             const Icon = t.icon;
             return (
-              <button key={t.id} onClick={() => setType(t.id)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${type === t.id ? 'bg-primary text-white' : 'text-text-muted hover:bg-primary/5'}`}>
+              <button key={t.id} onClick={() => setType(t.id)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${safeType === t.id ? 'bg-primary text-white' : 'text-text-muted hover:bg-primary/5'}`}>
                 <Icon size={14} /> {t.label}
               </button>
             );
@@ -255,11 +86,11 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
         </div>
 
         <div className="p-4 space-y-3">
-          {type === 'task' && <>
+          {safeType === 'task' && <>
             <input type="text" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Görev adı *" className={inputClass} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
             <select value={taskProject} onChange={(e) => setTaskProject(e.target.value)} className={`w-full ${selectClass}`}>
               <option value="">Proje seçin (opsiyonel)</option>
-              {data.projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+              {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <div className="flex gap-3">
               <select value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)} className={`flex-1 ${selectClass}`}>
@@ -273,41 +104,7 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
             </label>
           </>}
 
-          {type === 'project' && <>
-            {/* URL Auto-Import */}
-            <div className="relative">
-              <Link size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input type="url" value={importUrl} onChange={handleUrlPaste} placeholder="GitHub veya site linki yapıştır (otomatik doldurur)" className={`${inputClass} pl-9 ${fetching ? 'pr-10' : ''}`} autoFocus />
-              {fetching && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />}
-            </div>
-            {fetchError && <p className="text-xs text-danger">{fetchError}</p>}
-            {importUrl && !fetching && projTitle && (
-              <p className="text-[11px] text-success">Bilgiler otomatik dolduruldu</p>
-            )}
-
-            <input type="text" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} placeholder="Proje adı *" className={inputClass} />
-            <input type="text" value={projDesc} onChange={(e) => setProjDesc(e.target.value)} placeholder="Kısa açıklama" className={inputClass} />
-            <input type="text" value={projHighlight} onChange={(e) => setProjHighlight(e.target.value)} placeholder="Öne çıkan özellik" className={inputClass} />
-            <div className="flex gap-3">
-              <select value={projType} onChange={(e) => setProjType(e.target.value)} className={`flex-1 ${selectClass}`}>
-                {PROJECT_TYPES.map((t) => <option key={t} value={t}>{PROJECT_TYPE_LABELS[t]}</option>)}
-              </select>
-              <select value={projCategory} onChange={(e) => setProjCategory(e.target.value)} className={`flex-1 ${selectClass}`}>
-                {PROJECT_CATEGORIES.map((c) => <option key={c} value={c}>{PROJECT_CATEGORY_LABELS[c]}</option>)}
-              </select>
-            </div>
-            <select value={projPriority} onChange={(e) => setProjPriority(e.target.value)} className={`w-full ${selectClass}`}>
-              {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
-            </select>
-            <input type="text" value={projTechStack} onChange={(e) => setProjTechStack(e.target.value)} placeholder="Teknolojiler (virgülle ayır)" className={inputClass} />
-            <input type="text" value={projTags} onChange={(e) => setProjTags(e.target.value)} placeholder="Etiketler (virgülle ayır)" className={inputClass} />
-            <div className="flex gap-3">
-              <input type="url" value={projRepoUrl} onChange={(e) => setProjRepoUrl(e.target.value)} placeholder="GitHub URL" className={`flex-1 ${inputClass}`} />
-              <input type="url" value={projSiteUrl} onChange={(e) => setProjSiteUrl(e.target.value)} placeholder="Site URL" className={`flex-1 ${inputClass}`} />
-            </div>
-          </>}
-
-          {type === 'learning' && <>
+          {safeType === 'learning' && <>
             <input type="text" value={learnTitle} onChange={(e) => setLearnTitle(e.target.value)} placeholder="Eğitim adı *" className={inputClass} autoFocus />
             <input type="text" value={learnProvider} onChange={(e) => setLearnProvider(e.target.value)} placeholder="Platform (YouTube, Udemy...)" className={inputClass} />
             <div>
@@ -353,7 +150,7 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
             </div>
           </>}
 
-          {type === 'note' && <>
+          {safeType === 'note' && <>
             <input type="text" value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} placeholder="Not başlığı *" className={inputClass} autoFocus />
             <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} placeholder="İçerik..." rows={3} className={`${inputClass} resize-none`} />
             <div className="flex gap-3">
@@ -362,17 +159,17 @@ export default function QuickAdd({ type, setType, data, update, onClose }) {
               </select>
               <select value={noteProject} onChange={(e) => setNoteProject(e.target.value)} className={`flex-1 ${selectClass}`}>
                 <option value="">Proje seçin</option>
-                {data.projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           </>}
 
-          {type === 'prompt' && <>
+          {safeType === 'prompt' && <>
             <input type="text" value={promptTitle} onChange={(e) => setPromptTitle(e.target.value)} placeholder="Prompt başlığı *" className={inputClass} autoFocus />
             <textarea value={promptText} onChange={(e) => setPromptText(e.target.value)} placeholder="Prompt metni..." rows={4} className={`${inputClass} resize-none font-mono text-xs`} />
             <select value={promptProject} onChange={(e) => setPromptProject(e.target.value)} className={`w-full ${selectClass}`}>
               <option value="">Proje seçin (opsiyonel)</option>
-              {data.projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+              {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </>}
 

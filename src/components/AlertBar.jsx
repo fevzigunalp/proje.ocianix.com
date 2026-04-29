@@ -22,7 +22,7 @@ export default function AlertBar({ data, updateData, navigate }) {
         key,
         type: 'success',
         icon: Trophy,
-        text: `${p.title} %${getProjectProgress(data, p.id)} tamamlandı! Bitiş çizgisi yakın!`,
+        text: `${p.name} %${getProjectProgress(data, p.id)} tamamlandı! Bitiş çizgisi yakın!`,
         action: () => navigate('project-detail', p.id),
         actionLabel: 'Projeye Git',
       });
@@ -36,7 +36,7 @@ export default function AlertBar({ data, updateData, navigate }) {
         key,
         type: 'warning',
         icon: AlertTriangle,
-        text: `${p.title} ${p.staleDays} gündür güncellenmedi`,
+        text: `${p.name} ${p.staleDays} gündür güncellenmedi`,
         action: () => navigate('project-detail', p.id),
         actionLabel: 'İncele',
       });

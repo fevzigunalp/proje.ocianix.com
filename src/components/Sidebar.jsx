@@ -1,5 +1,5 @@
-import { LayoutDashboard, FolderKanban, ListTodo, BookOpen, StickyNote, Paperclip, BarChart3, Search, Moon, Sun, X, Zap } from 'lucide-react';
-import { getTodayTasks, getOverdueTasks, getActiveProjects, getActiveLearning } from '../store';
+import { LayoutDashboard, FolderKanban, ListTodo, BookOpen, StickyNote, Paperclip, BarChart3, Search, Moon, Sun, X, Zap, Cloud } from 'lucide-react';
+import { getTodayTasks, getOverdueTasks, getActiveProjects, getActiveLearning, getLiveProjects } from '../store';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const navItems = [
   { id: 'assets', label: 'Kaynaklar', icon: Paperclip },
   { id: 'reviews', label: 'İlerleme', icon: BarChart3 },
   { id: 'search', label: 'Arama', icon: Search },
+  { id: 'sync', label: 'Sheet Senkron', icon: Cloud },
 ];
 
 export default function Sidebar({ view, navigate, dark, setDark, open, onClose, data }) {

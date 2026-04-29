@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadData, saveData } from './store';
+import { loadData, saveData, fetchProjectsAndApply, startProjectPolling, pushProject, deleteProject } from './store';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
+import ProjectEditModal from './components/ProjectEditModal';
+import SyncSettings from './components/SyncSettings';
 import TaskList from './components/TaskList';
 import LearningList from './components/LearningList';
 import LearningDetail from './components/LearningDetail';
@@ -22,12 +24,19 @@ export default function App() {
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState(null);
+  const [editProject, setEditProject] = useState(null); // { ...project } or {} for new
 
   useEffect(() => { saveData(data); }, [data]);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   }, [dark]);
+  // Fetch projects on mount + start polling for live sheet sync
+  useEffect(() => {
+    fetchProjectsAndApply(setData);
+    const stop = startProjectPolling(setData);
+    return stop;
+  }, []);
 
   const update = useCallback((key, item) => {
     setData((d) => ({
@@ -86,8 +95,9 @@ export default function App() {
 
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto pb-24">
           {view === 'dashboard' && <Dashboard data={data} navigate={navigate} update={update} />}
-          {view === 'projects' && <ProjectList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('project')} />}
-          {view === 'project-detail' && <ProjectDetail data={data} projectId={selectedId} update={update} remove={remove} navigate={navigate} />}
+          {view === 'projects' && <ProjectList data={data} navigate={navigate} onEdit={(p) => setEditProject(p)} onNew={() => setEditProject({})} />}
+          {view === 'project-detail' && <ProjectDetail data={data} projectId={selectedId} update={update} remove={remove} navigate={navigate} updateData={updateData} onEdit={(p) => setEditProject(p)} onDelete={async (id) => { await deleteProject(setData, id); navigate('projects'); }} />}
+          {view === 'sync' && <SyncSettings data={data} setData={setData} />}
           {view === 'tasks' && <TaskList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('task')} />}
           {view === 'learning' && <LearningList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('learning')} />}
           {view === 'learning-detail' && <LearningDetail data={data} learningId={selectedId} update={update} remove={remove} navigate={navigate} />}
@@ -112,6 +122,17 @@ export default function App() {
           data={data}
           update={update}
           onClose={() => setQuickAdd(null)}
+        />
+      )}
+
+      {editProject && (
+        <ProjectEditModal
+          project={editProject}
+          onClose={() => setEditProject(null)}
+          onSave={async (p) => {
+            await pushProject(setData, p);
+            setEditProject(null);
+          }}
         />
       )}
     </div>
