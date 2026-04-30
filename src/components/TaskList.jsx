@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Search, Check, Trash2, Zap, ListTodo, LayoutGrid } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import { TASK_STATUS_LABELS, PRIORITY_LABELS, ENERGY_LABELS, getTodayTasks, getOverdueTasks } from '../store';
+import { Plus, Search, Check, Pencil, Trash2, Zap, ListTodo, LayoutGrid, Cloud, CloudOff } from 'lucide-react';
+import { TASK_STATUS_LABELS, ENERGY_LABELS, getTodayTasks, getOverdueTasks } from '../store';
+import { isLiveMode } from '../sheetSync';
+import RelatedProjectBadge from './RelatedProjectBadge';
 
 const viewModes = [
   { id: 'today', label: 'Bugün', icon: Zap },
@@ -16,57 +17,79 @@ const statusColors = {
 
 const priorityDots = { critical: 'bg-danger', high: 'bg-orange', medium: 'bg-primary', low: 'bg-warm-light' };
 
-export default function TaskList({ data, update, remove, navigate, onQuickAdd }) {
+export default function TaskList({ data, navigate, onEdit, onDelete, onPush, onNew }) {
   const [mode, setMode] = useState('today');
   const [search, setSearch] = useState('');
-  const [newTask, setNewTask] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
   const today = new Date().toISOString().slice(0, 10);
+  const live = isLiveMode();
 
-  const allTasks = data.tasks.filter((t) => {
-    if (search) return t.title.toLowerCase().includes(search.toLowerCase());
+  const allTasks = (data.tasks || []).filter((t) => {
+    if (search) return (t.title || '').toLowerCase().includes(search.toLowerCase());
     return true;
   });
 
   const todayTasks = getTodayTasks(data);
   const overdueTasks = getOverdueTasks(data);
 
-  const toggleTask = (task) => {
+  const toggleTask = async (task) => {
     const newStatus = task.status === 'completed' ? 'todo' : 'completed';
-    update('tasks', { ...task, status: newStatus, completedAt: newStatus === 'completed' ? today : null, updatedAt: today });
-  };
-
-  const addTask = () => {
-    if (!newTask.trim()) return;
-    update('tasks', {
-      id: uuidv4(), projectId: null, phaseId: null, learningItemId: null, parentTaskId: null,
-      title: newTask.trim(), description: '', status: 'todo', priority: 'medium', energyLevel: 'medium',
-      estimatedMinutes: null, actualMinutes: null, dueDate: mode === 'today' ? today : null,
-      startDate: null, completedAt: null, isToday: mode === 'today', isNextStep: false, isRecurring: false,
-      blockedReason: '', resultNote: '', tags: [], createdAt: today, updatedAt: today,
+    await onPush({
+      ...task,
+      status: newStatus,
+      completedAt: newStatus === 'completed' ? today : null,
     });
-    setNewTask('');
   };
 
-  const getProject = (id) => data.projects.find((p) => p.id === id);
+  const addTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    await onPush({
+      title: newTaskTitle.trim(),
+      description: '',
+      status: 'todo',
+      priority: 'medium',
+      energyLevel: 'medium',
+      isToday: mode === 'today',
+      isNextStep: false,
+      dueDate: mode === 'today' ? today : null,
+      tags: [],
+    });
+    setNewTaskTitle('');
+  };
+
+  const getProject = (id) => (data.projects || []).find((p) => p.id === id);
 
   const renderTask = (task) => {
-    const project = getProject(task.projectId);
+    const projectId = task.relatedProjectId || task.projectId;
     return (
-      <div key={task.id} className={`flex items-center gap-3 p-3 rounded-xl border border-border-light dark:border-border-dark ${task.status === 'completed' ? 'bg-success/5' : 'bg-surface dark:bg-surface-dark-alt'} transition-all`}>
-        <button onClick={() => toggleTask(task)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${task.status === 'completed' ? 'bg-success border-success text-white' : 'border-border-light dark:border-border-dark hover:border-primary'}`}>
+      <div key={task.id} className={`group flex items-center gap-3 p-3 rounded-xl border border-border-light dark:border-border-dark ${task.status === 'completed' ? 'bg-success/5' : 'bg-surface dark:bg-surface-dark-alt'} transition-all`}>
+        <button onClick={() => toggleTask(task)} title={task.status === 'completed' ? 'Geri al' : 'Tamamla'} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${task.status === 'completed' ? 'bg-success border-success text-white' : 'border-border-light dark:border-border-dark hover:border-primary'}`}>
           {task.status === 'completed' && <Check size={12} />}
         </button>
-        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityDots[task.priority]}`} />
-        <div className="flex-1 min-w-0">
+        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityDots[task.priority] || priorityDots.medium}`} />
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit && onEdit(task)}>
           <p className={`text-sm ${task.status === 'completed' ? 'line-through text-text-muted' : ''}`}>{task.title}</p>
           <div className="flex items-center gap-2 mt-0.5 text-[10px] text-text-muted flex-wrap">
-            {project && <span className="text-primary">{project.title}</span>}
+            {projectId && <RelatedProjectBadge projectId={projectId} projects={data.projects} navigate={navigate} size="xs" />}
             {task.dueDate && <span className={task.dueDate < today && task.status !== 'completed' ? 'text-danger font-medium' : ''}>{task.dueDate}</span>}
-            {task.energyLevel !== 'medium' && <span>{ENERGY_LABELS[task.energyLevel]}</span>}
+            {task.energyLevel && task.energyLevel !== 'medium' && <span>{ENERGY_LABELS[task.energyLevel]}</span>}
             {task.estimatedMinutes && <span>{task.estimatedMinutes}dk</span>}
+            {task.blockedReason && <span className="text-warm">⚠ {task.blockedReason}</span>}
+            {task.tags && task.tags.length > 0 && <span className="text-text-muted/60">{task.tags.map(t => t.startsWith('#') ? t : '#' + t).join(' ')}</span>}
           </div>
         </div>
-        <button onClick={() => remove('tasks', task.id)} className="p-1 text-text-muted hover:text-danger shrink-0"><Trash2 size={13} /></button>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onEdit && (
+            <button onClick={(e) => { e.stopPropagation(); onEdit(task); }} title="Düzenle" className="p-1 text-text-muted hover:text-primary">
+              <Pencil size={13} />
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={(e) => { e.stopPropagation(); onDelete(task); }} title="Sil" className="p-1 text-text-muted hover:text-danger">
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
       </div>
     );
   };
@@ -76,8 +99,24 @@ export default function TaskList({ data, update, remove, navigate, onQuickAdd })
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Görevler</h1>
-        <button onClick={onQuickAdd} className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-medium">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Görevler
+            {live ? (
+              <span className="text-[10px] inline-flex items-center gap-1 px-2 py-0.5 bg-success/10 text-success rounded-md font-medium">
+                <Cloud size={11} /> Sheet canlı
+              </span>
+            ) : (
+              <span className="text-[10px] inline-flex items-center gap-1 px-2 py-0.5 bg-warm/10 text-warm rounded-md font-medium">
+                <CloudOff size={11} /> Yerel
+              </span>
+            )}
+          </h1>
+          <p className="text-sm text-text-muted">
+            {allTasks.length} görev · Son sync: {data?._taskSyncedAt ? new Date(data._taskSyncedAt).toLocaleTimeString('tr-TR') : '—'}
+          </p>
+        </div>
+        <button onClick={onNew} className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-medium">
           <Plus size={16} /> Yeni Görev
         </button>
       </div>
@@ -100,8 +139,8 @@ export default function TaskList({ data, update, remove, navigate, onQuickAdd })
       </div>
 
       <div className="flex gap-2">
-        <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder={mode === 'today' ? "Bugüne görev ekle..." : "Yeni görev..."} className="flex-1 px-4 py-2.5 bg-surface dark:bg-surface-dark-alt border border-border-light dark:border-border-dark rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        <button onClick={addTask} className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm"><Plus size={16} /></button>
+        <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder={mode === 'today' ? "Bugüne görev ekle..." : "Yeni görev..."} className="flex-1 px-4 py-2.5 bg-surface dark:bg-surface-dark-alt border border-border-light dark:border-border-dark rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <button onClick={addTask} className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm" title="Hızlı ekle"><Plus size={16} /></button>
       </div>
 
       {mode === 'today' && (
@@ -129,6 +168,7 @@ export default function TaskList({ data, update, remove, navigate, onQuickAdd })
               <div className="space-y-2 mt-2">{allTasks.filter((t) => t.status === 'completed').map(renderTask)}</div>
             </details>
           )}
+          {allTasks.length === 0 && <p className="text-sm text-text-muted text-center py-6">Görev yok — yukarıdan ekle</p>}
         </div>
       )}
 
@@ -144,16 +184,20 @@ export default function TaskList({ data, update, remove, navigate, onQuickAdd })
                 </div>
                 <div className="space-y-2">
                   {items.map((task) => {
-                    const project = getProject(task.projectId);
+                    const projectId = task.relatedProjectId || task.projectId;
                     return (
-                      <div key={task.id} className="bg-surface dark:bg-surface-dark-alt border border-border-light dark:border-border-dark rounded-xl p-3">
+                      <button key={task.id} onClick={() => onEdit && onEdit(task)} className="w-full text-left bg-surface dark:bg-surface-dark-alt border border-border-light dark:border-border-dark rounded-xl p-3 hover:shadow-md transition-all">
                         <div className="flex items-center gap-1.5 mb-1">
-                          <div className={`w-1.5 h-1.5 rounded-full ${priorityDots[task.priority]}`} />
+                          <div className={`w-1.5 h-1.5 rounded-full ${priorityDots[task.priority] || priorityDots.medium}`} />
                           <p className="text-sm font-medium truncate">{task.title}</p>
                         </div>
-                        {project && <p className="text-[10px] text-primary">{project.title}</p>}
+                        {projectId && (
+                          <div className="mt-1">
+                            <RelatedProjectBadge projectId={projectId} projects={data.projects} navigate={navigate} size="xs" />
+                          </div>
+                        )}
                         {task.dueDate && <p className="text-[10px] text-text-muted mt-1">{task.dueDate}</p>}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadData, saveData, fetchProjectsAndApply, startProjectPolling, pushProject, deleteProject } from './store';
+import { loadData, saveData, fetchProjectsAndApply, startProjectPolling, pushProject, deleteProject, fetchTasksAndApply, startTaskPolling, pushTask, deleteTask } from './store';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ProjectList from './components/ProjectList';
@@ -8,6 +8,7 @@ import ProjectEditModal from './components/ProjectEditModal';
 import ProjectDeleteConfirm from './components/ProjectDeleteConfirm';
 import SyncSettings from './components/SyncSettings';
 import TaskList from './components/TaskList';
+import TaskEditModal from './components/TaskEditModal';
 import LearningList from './components/LearningList';
 import LearningDetail from './components/LearningDetail';
 import NoteList from './components/NoteList';
@@ -25,19 +26,23 @@ export default function App() {
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState(null);
-  const [editProject, setEditProject] = useState(null); // { ...project } or {} for new
-  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null); // project to delete
+  const [editProject, setEditProject] = useState(null);
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null);
+  const [editTask, setEditTask] = useState(null);
+  const [deleteTaskTarget, setDeleteTaskTarget] = useState(null);
 
   useEffect(() => { saveData(data); }, [data]);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   }, [dark]);
-  // Fetch projects on mount + start polling for live sheet sync
+  // Fetch projects + tasks on mount + start independent pollers
   useEffect(() => {
     fetchProjectsAndApply(setData);
-    const stop = startProjectPolling(setData);
-    return stop;
+    fetchTasksAndApply(setData);
+    const stopP = startProjectPolling(setData);
+    const stopT = startTaskPolling(setData);
+    return () => { stopP(); stopT(); };
   }, []);
 
   const update = useCallback((key, item) => {
@@ -100,7 +105,16 @@ export default function App() {
           {view === 'projects' && <ProjectList data={data} navigate={navigate} onEdit={(p) => setEditProject(p)} onNew={() => setEditProject({})} />}
           {view === 'project-detail' && <ProjectDetail data={data} projectId={selectedId} update={update} remove={remove} navigate={navigate} updateData={updateData} onEdit={(p) => setEditProject(p)} onDelete={(p) => setDeleteProjectTarget(p)} />}
           {view === 'sync' && <SyncSettings data={data} setData={setData} />}
-          {view === 'tasks' && <TaskList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('task')} />}
+          {view === 'tasks' && (
+            <TaskList
+              data={data}
+              navigate={navigate}
+              onPush={(t) => pushTask(setData, t)}
+              onEdit={(t) => setEditTask(t)}
+              onDelete={(t) => setDeleteTaskTarget(t)}
+              onNew={() => setEditTask({})}
+            />
+          )}
           {view === 'learning' && <LearningList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('learning')} />}
           {view === 'learning-detail' && <LearningDetail data={data} learningId={selectedId} update={update} remove={remove} navigate={navigate} />}
           {view === 'notes' && <NoteList data={data} update={update} remove={remove} navigate={navigate} onQuickAdd={() => setQuickAdd('note')} />}
@@ -146,6 +160,31 @@ export default function App() {
             await deleteProject(setData, id);
             setDeleteProjectTarget(null);
             if (view === 'project-detail') navigate('projects');
+          }}
+        />
+      )}
+
+      {editTask && (
+        <TaskEditModal
+          task={editTask}
+          projects={data.projects}
+          onClose={() => setEditTask(null)}
+          onSave={async (t) => {
+            await pushTask(setData, t);
+            setEditTask(null);
+          }}
+        />
+      )}
+
+      {deleteTaskTarget && (
+        <ProjectDeleteConfirm
+          entity={deleteTaskTarget}
+          label={deleteTaskTarget.title}
+          kindLabel="görevi"
+          onClose={() => setDeleteTaskTarget(null)}
+          onConfirm={async (id) => {
+            await deleteTask(setData, id);
+            setDeleteTaskTarget(null);
           }}
         />
       )}

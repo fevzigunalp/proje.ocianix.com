@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { fetchProjectsFromSheet, upsertProjectToSheet, deleteProjectFromSheet, isLiveMode, getPollSeconds } from './sheetSync';
+import { fetchProjectsFromSheet, upsertProjectToSheet, deleteProjectFromSheet, fetchTabRecords, upsertRecord, deleteRecord, isLiveMode, getPollSeconds } from './sheetSync';
 
 const STORAGE_KEY = 'ocianix-ops-v2';
 const FOCUS_KEY = 'ocianix-ops-focus';
@@ -211,6 +211,123 @@ export async function pushProject(setData, project) {
       const next = exists ? list.map((p) => (p.id === project.id ? { ...p, ...project } : p)) : [...list, decorateProject(project)];
       return { ...d, projects: next };
     });
+  }
+}
+
+// ============================================================================
+// GÖREVLER — Sheet ↔ site
+// ============================================================================
+// Sheet'te Türkçe enum'lar (mimari kararı). Kod tabanı (TaskList vs) eski İngilizce
+// enum'ları kullanıyor → boundary'de translate ediyoruz.
+
+const TASK_STATUS_TR_TO_EN = {
+  'yapılacak': 'todo', 'devam-ediyor': 'in_progress', 'beklemede': 'waiting',
+  'incelemede': 'review', 'tamamlandı': 'completed', 'iptal': 'cancelled',
+};
+const TASK_STATUS_EN_TO_TR = Object.fromEntries(
+  Object.entries(TASK_STATUS_TR_TO_EN).map(([k, v]) => [v, k])
+);
+const TASK_PRIO_TR_TO_EN = { 'kritik': 'critical', 'yüksek': 'high', 'orta': 'medium', 'düşük': 'low' };
+const TASK_PRIO_EN_TO_TR = Object.fromEntries(
+  Object.entries(TASK_PRIO_TR_TO_EN).map(([k, v]) => [v, k])
+);
+const TASK_ENERGY_TR_TO_EN = { 'derin': 'deep', 'orta': 'medium', 'hafif': 'light' };
+const TASK_ENERGY_EN_TO_TR = Object.fromEntries(
+  Object.entries(TASK_ENERGY_TR_TO_EN).map(([k, v]) => [v, k])
+);
+
+// Sheet'ten gelen task'ı kod tabanı için decorate et: TR→EN enum + alias projectId
+export function decorateTask(t) {
+  return {
+    ...t,
+    status: TASK_STATUS_TR_TO_EN[t.status] || t.status || 'todo',
+    priority: TASK_PRIO_TR_TO_EN[t.priority] || t.priority || 'medium',
+    energyLevel: TASK_ENERGY_TR_TO_EN[t.energyLevel] || t.energyLevel || 'medium',
+    // backward-compat aliases — eski TaskList projectId/learningItemId kullanıyor
+    projectId: t.relatedProjectId || t.projectId || null,
+    learningItemId: t.relatedLearningId || t.learningItemId || null,
+    parentTaskId: t.dependsOnTaskId || t.parentTaskId || null,
+    tags: Array.isArray(t.tags) ? t.tags : (typeof t.tags === 'string' && t.tags ? t.tags.split(',').map(s => s.trim()).filter(Boolean) : []),
+  };
+}
+
+// Site → Sheet: EN enum + canonical alan adları
+export function serializeTaskForSheet(t) {
+  return {
+    id: t.id,
+    title: t.title || '',
+    description: t.description || '',
+    status: TASK_STATUS_EN_TO_TR[t.status] || t.status || 'yapılacak',
+    priority: TASK_PRIO_EN_TO_TR[t.priority] || t.priority || 'orta',
+    energyLevel: TASK_ENERGY_EN_TO_TR[t.energyLevel] || t.energyLevel || 'orta',
+    isToday: !!t.isToday,
+    isNextStep: !!t.isNextStep,
+    estimatedMinutes: t.estimatedMinutes ?? null,
+    actualMinutes: t.actualMinutes ?? null,
+    startDate: t.startDate || '',
+    dueDate: t.dueDate || '',
+    completedAt: t.completedAt || '',
+    blockedReason: t.blockedReason || '',
+    dependsOnTaskId: t.dependsOnTaskId || t.parentTaskId || '',
+    resultNote: t.resultNote || '',
+    tags: Array.isArray(t.tags) ? t.tags : [],
+    relatedProjectId: t.relatedProjectId || t.projectId || '',
+    relatedLearningId: t.relatedLearningId || t.learningItemId || '',
+    createdAt: t.createdAt || '',
+    deleted: !!t.deleted,
+  };
+}
+
+export async function fetchTasksAndApply(setData) {
+  try {
+    const { source, records } = await fetchTabRecords('tasks');
+    if (!Array.isArray(records)) return null;
+    setData((d) => ({
+      ...d,
+      tasks: records.map(decorateTask),
+      _taskSource: source,
+      _taskSyncedAt: new Date().toISOString(),
+    }));
+    return { source, count: records.length };
+  } catch (err) {
+    console.warn('[sync] tasks fetch failed:', err);
+    return null;
+  }
+}
+
+export function startTaskPolling(setData) {
+  let cancelled = false;
+  let timer = null;
+  const TASK_POLL_SEC = 15;
+  const tick = async () => {
+    if (cancelled) return;
+    if (isLiveMode()) await fetchTasksAndApply(setData);
+    timer = setTimeout(tick, TASK_POLL_SEC * 1000);
+  };
+  timer = setTimeout(tick, TASK_POLL_SEC * 1000);
+  return () => { cancelled = true; if (timer) clearTimeout(timer); };
+}
+
+export async function pushTask(setData, task) {
+  if (isLiveMode()) {
+    await upsertRecord('tasks', serializeTaskForSheet(task));
+    await fetchTasksAndApply(setData);
+  } else {
+    setData((d) => {
+      const list = d.tasks || [];
+      const exists = list.some((t) => t.id === task.id);
+      const next = exists ? list.map((t) => (t.id === task.id ? { ...t, ...task } : t)) : [...list, task];
+      return { ...d, tasks: next };
+    });
+  }
+}
+
+export async function deleteTask(setData, id) {
+  if (isLiveMode()) {
+    await deleteRecord('tasks', id);
+    await fetchTasksAndApply(setData);
+  } else {
+    setData((d) => ({ ...d, tasks: (d.tasks || []).filter((t) => t.id !== id) }));
   }
 }
 

@@ -1,4 +1,4 @@
-// Google Sheet ↔ site iki yönlü senkron istemcisi.
+// Google Sheet ↔ site iki yönlü senkron istemcisi (multi-tab).
 // Apps Script Web App URL ve admin token localStorage'tan veya VITE_* env'den okunur.
 
 const URL_KEY = 'sheetApiUrl';
@@ -38,36 +38,48 @@ export function isLiveMode() {
   return !!getSheetUrl();
 }
 
-// Read all projects from Sheet (or fall back to /projects.json)
-export async function fetchProjectsFromSheet() {
+// ----- Generic GET / POST -----
+
+async function getRecords(tab) {
   const url = getSheetUrl();
   if (!url) {
-    // Fallback to static JSON
-    const res = await fetch('/projects.json?t=' + Date.now());
-    if (!res.ok) throw new Error('projects.json fetch failed');
-    const arr = await res.json();
-    return { source: 'static', projects: arr };
+    if (tab === 'projects') {
+      const res = await fetch('/projects.json?t=' + Date.now());
+      if (!res.ok) throw new Error('projects.json fetch failed');
+      const arr = await res.json();
+      return { source: 'static', records: arr };
+    }
+    // Diğer tablar için statik fallback yok — boş dön
+    return { source: 'static', records: [] };
   }
-  const res = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), {
+  const sep = url.includes('?') ? '&' : '?';
+  const res = await fetch(`${url}${sep}tab=${encodeURIComponent(tab)}&t=${Date.now()}`, {
     method: 'GET',
     redirect: 'follow',
   });
   if (!res.ok) throw new Error('Sheet API GET failed: ' + res.status);
   const data = await res.json();
   if (!data.ok) throw new Error('Sheet API error: ' + data.error);
-  return { source: 'sheet', projects: data.projects || [], ts: data.ts };
+  // Apps Script multi-tab güncellemesi yapılmadıysa response'da tab alanı yoktur
+  // ve hangi sekme istendiyse istensin Sayfa1 (projects) döner. Yanlış sekme verisini
+  // hedef state'e yazmamak için "tasks" istenip projeler dönüyorsa boş kabul et.
+  if (tab !== 'projects' && data.tab !== tab) {
+    console.warn(`[sync] Apps Script multi-tab güncellemesi yapılmamış — ${tab} sekmesi şu an boş döndürülecek.`);
+    return { source: 'sheet-legacy', records: [], ts: data.ts };
+  }
+  const records = data.records || data.projects || [];
+  return { source: 'sheet', records, ts: data.ts };
 }
 
-async function postSheet(body) {
+async function postAction(tab, body) {
   const url = getSheetUrl();
   const token = getAdminToken();
   if (!url) throw new Error('Sheet API URL ayarlanmamış');
   if (!token) throw new Error('Admin token ayarlanmamış');
-  // Apps Script web app çağrılarında preflight'tan kaçınmak için text/plain kullanıyoruz.
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ ...body, token }),
+    body: JSON.stringify({ ...body, tab, token }),
     redirect: 'follow',
   });
   if (!res.ok) throw new Error('Sheet API POST failed: ' + res.status);
@@ -76,14 +88,39 @@ async function postSheet(body) {
   return data;
 }
 
+// ----- Projects (geri uyumlu wrapper'lar — eski isimler) -----
+
+export async function fetchProjectsFromSheet() {
+  const r = await getRecords('projects');
+  return { source: r.source, projects: r.records, ts: r.ts };
+}
+
 export async function upsertProjectToSheet(project) {
-  return postSheet({ action: 'upsert', project });
+  return postAction('projects', { action: 'upsert', record: project });
 }
 
 export async function deleteProjectFromSheet(id) {
-  return postSheet({ action: 'delete', id });
+  return postAction('projects', { action: 'delete', id });
 }
 
 export async function replaceAllInSheet(projects) {
-  return postSheet({ action: 'replaceAll', projects });
+  return postAction('projects', { action: 'replaceAll', records: projects });
+}
+
+// ----- Generic helpers (yeni tablar için) -----
+
+export async function fetchTabRecords(tab) {
+  return getRecords(tab);
+}
+
+export async function upsertRecord(tab, record) {
+  return postAction(tab, { action: 'upsert', record });
+}
+
+export async function deleteRecord(tab, id) {
+  return postAction(tab, { action: 'delete', id });
+}
+
+export async function restoreRecord(tab, id) {
+  return postAction(tab, { action: 'restore', id });
 }
