@@ -156,8 +156,8 @@ export default function App() {
         <ProjectDeleteConfirm
           project={deleteProjectTarget}
           onClose={() => setDeleteProjectTarget(null)}
-          onConfirm={async (id) => {
-            await deleteProject(setData, id);
+          onConfirm={async () => {
+            await deleteProject(setData, deleteProjectTarget);
             setDeleteProjectTarget(null);
             if (view === 'project-detail') navigate('projects');
           }}

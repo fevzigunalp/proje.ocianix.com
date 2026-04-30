@@ -99,8 +99,10 @@ export async function upsertProjectToSheet(project) {
   return postAction('projects', { action: 'upsert', record: project });
 }
 
-export async function deleteProjectFromSheet(id) {
-  return postAction('projects', { action: 'delete', id });
+export async function deleteProjectFromSheet(id, rowIndex) {
+  const payload = { action: 'delete', id };
+  if (rowIndex != null) payload.rowIndex = rowIndex;
+  return postAction('projects', payload);
 }
 
 export async function replaceAllInSheet(projects) {

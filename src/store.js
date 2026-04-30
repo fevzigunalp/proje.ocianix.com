@@ -331,10 +331,16 @@ export async function deleteTask(setData, id) {
   }
 }
 
-// Delete a project (Sheet + local).
-export async function deleteProject(setData, id) {
+// Delete a project (Sheet + local). Accepts either an id string or a project
+// object — when an object is passed, rowIndex is also forwarded so that the
+// Apps Script bridge can fall back to row-based lookup if id matching fails
+// (e.g. for legacy Excel rows whose id cell drifted).
+export async function deleteProject(setData, projectOrId) {
+  const isObj = projectOrId && typeof projectOrId === 'object';
+  const id = isObj ? projectOrId.id : projectOrId;
+  const rowIndex = isObj ? projectOrId.rowIndex : null;
   if (isLiveMode()) {
-    await deleteProjectFromSheet(id);
+    await deleteProjectFromSheet(id, rowIndex);
     await fetchProjectsAndApply(setData);
   } else {
     setData((d) => ({ ...d, projects: (d.projects || []).filter((p) => p.id !== id) }));
