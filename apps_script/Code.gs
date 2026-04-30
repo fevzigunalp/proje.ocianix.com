@@ -297,15 +297,28 @@ function doPost(e) {
       if (action === 'upsert') {
         if (!record.id) record.id = (tab === 'projects') ? ('row-' + Date.now() + '-' + slugify_(record.name || 'proje')) : newId_(cfg.idPrefix);
         if (!record.createdAt && tab !== 'projects') record.createdAt = nowIso_();
-        const existing = findRowById_(tab, record.id);
+        let existing = findRowById_(tab, record.id);
+        let matchedBy = existing ? 'id' : null;
+        if (!existing) {
+          const ri = body.rowIndex != null ? body.rowIndex : record.rowIndex;
+          const fallback = rowFromRowIndex_(sh, ri);
+          if (fallback) {
+            existing = fallback;
+            matchedBy = 'rowIndex';
+            const cellId = sh.getRange(fallback, cfg.idIndex).getValue();
+            const cellIdStr = String(cellId == null ? '' : cellId).trim();
+            if (cellIdStr) record.id = cellIdStr;
+          }
+        }
         const rowVals = cfg.toRow(record, cfg);
         if (existing) {
           sh.getRange(existing, 1, 1, cfg.headers.length).setValues([rowVals]);
         } else {
           sh.appendRow(rowVals);
+          matchedBy = 'append';
         }
         const written = cfg.toObject(rowVals, existing || sh.getLastRow(), cfg);
-        return jsonOut_({ ok: true, record: written, project: tab === 'projects' ? written : undefined });
+        return jsonOut_({ ok: true, record: written, project: tab === 'projects' ? written : undefined, matchedBy: matchedBy });
       }
 
       if (action === 'delete') {
